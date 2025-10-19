@@ -132,9 +132,13 @@ public final class Player {
         double moveX = 0;
         double moveY = 0;
 
-        // Velocidad lineal
+        //normaliza la velocidad con el dt
         double speed = v * dt;
 
+        /*descompone el movimiento diagonal descrito por el angulo (angle) en sus componentes en x y en y, usando seno y coseno. De esta forma
+        se obtiene el aumento para cada eje para llegar a la posición deseada individualmente. Ya que seno y coseno solo proporcionan valores
+        entre -1 y 1, para obtener el incremento total los componentes se multiplican por la velocidad normalizada*/
+        
         //adelante y atrás
         if (in.isKeyDown(KeyEvent.VK_W)) {
             moveX += Math.cos(angle) * speed;
@@ -147,11 +151,11 @@ public final class Player {
 
         //izquierda y derecha
         if (in.isKeyDown(KeyEvent.VK_A)) {
-            moveX += Math.sin(angle) * speed;   // izquierda
+            moveX += Math.sin(angle) * speed;
             moveY -= Math.cos(angle) * speed;
         }
         if (in.isKeyDown(KeyEvent.VK_D)) {
-            moveX -= Math.sin(angle) * speed;   // derecha
+            moveX -= Math.sin(angle) * speed;
             moveY += Math.cos(angle) * speed;
         }
 
@@ -172,7 +176,7 @@ public final class Player {
             y = newY;
         }
 
-        tile = new Position((int)(y / Engine.TILE_SIZE), (int)(x / Engine.TILE_SIZE));
+        tile = Map.getTile(x, y);
         System.out.println(tile);
     }
     

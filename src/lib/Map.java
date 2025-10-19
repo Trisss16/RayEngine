@@ -138,4 +138,9 @@ public class Map {
             }
         }
     }
+    
+    //regesa un objeto position indicando la casilla del mapa dentro de la que las coordenadas recibidas se encuentran
+    public static Position getTile(double xPos, double yPos) {
+        return new Position((int)(yPos / Engine.TILE_SIZE), (int)(xPos / Engine.TILE_SIZE));
+    }
 }

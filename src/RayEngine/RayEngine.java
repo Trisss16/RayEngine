@@ -13,7 +13,7 @@ public class RayEngine {
         
         //iniciar el motor
         Engine e = new Engine(p, m);
-        e.setTargetFPS(120);
+        //e.setTargetFPS(60);
         e.start();
     }
     
