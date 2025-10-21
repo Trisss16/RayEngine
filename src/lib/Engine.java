@@ -14,6 +14,8 @@ public class Engine extends JFrame{
     private final Canvas c;
     public final Input in;
     
+    private RayCaster raycaster;
+    
     //para ver loq ue sucede en la vista 2d
     private final Canvas view2d;
     private final JFrame frame2d;
@@ -60,6 +62,9 @@ public class Engine extends JFrame{
         
         //mapa
         this.map = map;
+        
+        //raycaster
+        this.raycaster = new RayCaster(p);
         
         //parámetros
         deltaTime = 0;
@@ -158,6 +163,7 @@ public class Engine extends JFrame{
         if (!this.isFocused())in.allFalse();
         
         p.update(dt);
+        raycaster.update(dt, p);
     }
     
     
@@ -172,6 +178,7 @@ public class Engine extends JFrame{
         //todo lo que se quiere renderizar
             g.drawString("" + deltaTime, 10, 10);
             if (paused) g.drawString("PAUSADO", 10, WIN_HEIGHT / 2);
+            raycaster.renderSimulation3D(g);
         
         
         

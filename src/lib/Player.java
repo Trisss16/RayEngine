@@ -46,6 +46,7 @@ public final class Player {
         return new Point((int) x, (int) y);
     }
     
+    
     //para guardar una referencia de la clase Input de engine y acceder a los eventos de mouse y teclado del frame de engine
     public void addInput(Input i) {
         this.in = i;
@@ -59,6 +60,18 @@ public final class Player {
     
     public void addEngine(Engine e) {
         this.e = e;
+    }
+    
+    
+    //regresa el angulo en grados
+    public double getAngle() {
+        return Math.toDegrees(angle);
+    }
+    
+    
+   //angulo real en radianes
+    public double getRadAngle() {
+        return angle;
     }
     
     //recibe el angulo y lo guarda convertido a radianes
@@ -77,55 +90,15 @@ public final class Player {
         if (angle < 0) angle += 2 * Math.PI;
     }
     
+    
     public void update(double dt) {
         //si aun no se agrea la clase de input o el map solo no actualiza
         if (in == null || map == null) return;
         
         updateAngle();
         updateMovement(dt); //actualiza el movimiento del personaje
+        System.out.println(angle);
     }
-    
-
-    //movimiento sin direccion
-    /*protected void updateMovement(double dt) {
-        double dx = 0;
-        double dy = 0;
-
-        // mpvimiento con wasd
-        if (in.isKeyDown(KeyEvent.VK_W)) dy -= 1;
-        if (in.isKeyDown(KeyEvent.VK_S)) dy += 1;
-        if (in.isKeyDown(KeyEvent.VK_A)) dx -= 1;
-        if (in.isKeyDown(KeyEvent.VK_D)) dx += 1;
-
-        //normalización del movimiento diagonal
-        if (dx != 0 && dy != 0) {
-            double factor = Math.sqrt(2) / 2;
-            dx *= factor;
-            dy *= factor;
-        }
-
-        //calcula la nueva posicion en x y en que casilla terminaria
-        double newX = x + dx * v * dt;
-        int tileX = (int)(newX / Engine.TILE_SIZE);
-        int tileY = (int)(y / Engine.TILE_SIZE);
-        
-        //si el nuevo valor en x no hace que el jugador termine dentro de una pared actualiza su posicion en x, si no se queda igual
-        if (map.map[tileY][tileX] == 0) x = newX;
-    
-        //lo mismo para la posicion en y
-        double newY = y + dy * v * dt;
-        tileX = (int)(x / Engine.TILE_SIZE);
-        tileY = (int)(newY / Engine.TILE_SIZE);
-        
-        //evalua las colisiones de manera separada, porque si se evaluan al mismo tiempo, una colision en un eje bloquea el otro eje.
-        
-        if (map.map[tileY][tileX] == 0) y = newY;
-        
-        //calcula en que casilla se encuentra el personaje despues del movimiento
-        tile = new Position( (int) y / Engine.TILE_SIZE, (int) x / Engine.TILE_SIZE);
-
-        System.out.println("" + tile);
-    }*/
     
     
     protected void updateMovement(double dt) {
@@ -177,7 +150,7 @@ public final class Player {
         }
 
         tile = Map.getTile(x, y);
-        System.out.println(tile);
+        //System.out.println(tile);
     }
     
     
