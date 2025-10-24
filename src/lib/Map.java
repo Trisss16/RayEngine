@@ -143,4 +143,10 @@ public class Map {
     public static Position getTile(double xPos, double yPos) {
         return new Position((int)(yPos / Engine.TILE_SIZE), (int)(xPos / Engine.TILE_SIZE));
     }
+    
+    //checa si las posiciones recibidas quedan dentro de una pared
+    public boolean insideOfWall(double x, double y) {
+        Position p = getTile(x, y);
+        return map[p.m][p.n] == 1;
+    }
 }

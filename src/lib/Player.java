@@ -97,7 +97,7 @@ public final class Player {
         
         updateAngle();
         updateMovement(dt); //actualiza el movimiento del personaje
-        System.out.println(angle);
+        //System.out.println(angle);
     }
     
     
@@ -150,7 +150,7 @@ public final class Player {
         }
 
         tile = Map.getTile(x, y);
-        //System.out.println(tile);
+        System.out.println(tile);
     }
     
     

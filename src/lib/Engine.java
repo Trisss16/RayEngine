@@ -24,8 +24,8 @@ public class Engine extends JFrame{
     //ATRIBUTOS
     private boolean running;
     
-    public static final int WIN_WIDTH = 500;
-    public static final int WIN_HEIGHT = 500;
+    public static int WIN_WIDTH = 500;
+    public static int WIN_HEIGHT = 500;
     
     private double deltaTime;
     private int targetFPS;
@@ -64,7 +64,7 @@ public class Engine extends JFrame{
         this.map = map;
         
         //raycaster
-        this.raycaster = new RayCaster(p);
+        this.raycaster = new RayCaster(p, map);
         
         //parámetros
         deltaTime = 0;
@@ -163,7 +163,7 @@ public class Engine extends JFrame{
         if (!this.isFocused())in.allFalse();
         
         p.update(dt);
-        raycaster.update(dt, p);
+        raycaster.update(dt);
     }
     
     
@@ -178,7 +178,7 @@ public class Engine extends JFrame{
         //todo lo que se quiere renderizar
             g.drawString("" + deltaTime, 10, 10);
             if (paused) g.drawString("PAUSADO", 10, WIN_HEIGHT / 2);
-            raycaster.renderSimulation3D(g);
+            //raycaster.renderSimulation3D(g);
         
         
         
@@ -201,7 +201,7 @@ public class Engine extends JFrame{
             g.fillRect(0, 0, view2d.getWidth(), view2d.getHeight());
             
             map.renderMap(g); //dibuja el mapa
-            
+            raycaster.renderView2D(g);
             p.drawPlayer(g);
         
         
@@ -210,5 +210,27 @@ public class Engine extends JFrame{
         g.dispose();
         bs.show();
     }
-
+    
+    
+    
+    //UTILIDADES
+    
+    public static void setWindowSize(int width, int height) {
+        WIN_WIDTH = width;
+        WIN_HEIGHT = height;
+    }
+    
+    //normaliza un angulo, manteniendolo dentro del rango de 0 a 2pi
+    public static double normalizeAngleRad(double a) {
+        a %= 2 * Math.PI;
+        if (a < 0) a += 2 * Math.PI;
+        return a;
+    }
+    
+    public static double normalizeAngleDeg(double a) {
+        a %= 360;
+        if (a < 0) a += 360;
+        return a;
+    }
+ 
 }

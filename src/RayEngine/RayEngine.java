@@ -9,7 +9,7 @@ public class RayEngine {
         Map m = new Map("/res/map.txt");
         
         //crear player
-        Player p = new Player(100, 80, 80);
+        Player p = new Player(100, 127, 127);
         
         //iniciar el motor
         Engine e = new Engine(p, m);
