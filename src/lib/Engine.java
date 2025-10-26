@@ -1,7 +1,7 @@
 package lib;
 
 import java.awt.*;
-import java.awt.image.BufferStrategy;
+import java.awt.image.*;
 import javax.swing.*;
 
 public class Engine extends JFrame{
@@ -24,12 +24,17 @@ public class Engine extends JFrame{
     //ATRIBUTOS
     private boolean running;
     
-    public static int WIN_WIDTH = 500;
-    public static int WIN_HEIGHT = 500;
+    public static  int WIN_WIDTH = 800;
+    public static int WIN_HEIGHT = 600;
     
     private double deltaTime;
     private int targetFPS;
     private boolean paused;
+    
+    public static void setWindowSize(Dimension d) {
+        WIN_WIDTH = d.width;
+        WIN_HEIGHT = d.height;
+    }
     
     
     public Engine(Player player, Map map) {
@@ -45,14 +50,14 @@ public class Engine extends JFrame{
         c.addMouseListener(in);
         c.addMouseMotionListener(in);
         
-        //canvas para la vista 3d
+        //canvas para la vista 2d
         this.view2d = new Canvas();
         view2d.setPreferredSize(new Dimension(map.n * TILE_SIZE, map.m * TILE_SIZE));
         frame2d = new JFrame();
         frame2d.add(view2d);
         frame2d.pack();
         frame2d.setResizable(false);
-        frame2d.setFocusableWindowState(false); //lo hace no focuseable, solo para visualizar el mapa
+        //frame2d.setFocusableWindowState(false); //lo hace no focuseable, solo para visualizar el mapa
         
         //guarda el player y le agrega el input
         this.p = player;
@@ -80,12 +85,25 @@ public class Engine extends JFrame{
         this.pack();
     }
     
-    
+    //pausar o resumir el juego
     public void togglePause() {
         paused = !paused;
         System.out.println("Pausado: " + paused);
     }
     
+    
+    //RAYCASTER
+    
+    public void setFOV(int FOV) {
+        raycaster.setFOV(FOV);
+    }
+    
+    public void setRaysToCast(int rays) {
+        raycaster.setRaysToCast(rays);
+    }
+    
+    
+    //CANVAS
     
     public Point getCanvasPos() {
         return c.getLocationOnScreen();
@@ -120,7 +138,7 @@ public class Engine extends JFrame{
             
             //recalcular el dt
             deltaTime = (finish - start) / 1_000_000_000.0;
-            deltaTime += delay(); //detiene el hilo para cubrir los fps esperadoa (targetFPS) y suma el tiempo que se detuvo al dt
+            deltaTime += delay(); //detiene el hilo para mantener los fps esperadoa (targetFPS) y suma el tiempo que se detuvo al dt
         }
     }
     
@@ -168,7 +186,11 @@ public class Engine extends JFrame{
     
     
     private void render(BufferStrategy bs) {
-        Graphics2D g = (Graphics2D) bs.getDrawGraphics();
+        Graphics2D g = (Graphics2D) bs.getDrawGraphics(); //obtiene el objeto para dibujar al canvas
+        
+        /*desactiva el antialiasing, que es un efecto de suavisado en las imagenes pixeleadas. Esto sirve para que
+        si se utilizan texturas de píxel art, o se renderiza con pocos rayos, la imagen no se vea borrosa*/
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         
         //limpia el frame anterior
         g.clearRect(0, 0, c.getWidth(), c.getHeight());
@@ -176,9 +198,7 @@ public class Engine extends JFrame{
         
         
         //todo lo que se quiere renderizar
-            g.drawString("" + deltaTime, 10, 10);
-            if (paused) g.drawString("PAUSADO", 10, WIN_HEIGHT / 2);
-            //raycaster.renderSimulation3D(g);
+            raycaster.renderSimulation3D(g);
         
         
         
@@ -200,15 +220,37 @@ public class Engine extends JFrame{
             g.setColor(Color.GRAY);
             g.fillRect(0, 0, view2d.getWidth(), view2d.getHeight());
             
-            map.renderMap(g); //dibuja el mapa
+            map.renderMap(g);
             raycaster.renderView2D(g);
             p.drawPlayer(g);
+            
+            //información
+            drawTextBox(g, String.format("dt: %.6f", deltaTime), 10, 10);
+            if (paused) drawTextBox(g, "PAUSADO", WIN_WIDTH / 2, 10);
         
         
         
         //muestra el frame dibujar
         g.dispose();
         bs.show();
+    }
+    
+    
+    //dibuja un texto con un fondo negro
+    private void drawTextBox(Graphics2D g, String str, int x, int y) {
+        FontMetrics fm = g.getFontMetrics();
+        
+        int fWidth = fm.stringWidth(str);
+        int fHeight = fm.getHeight();
+        
+        int offset = fHeight / 2;
+        int textX = x + offset;
+        int textY = y + offset + fm.getAscent();
+        
+        g.setColor(Color.black);
+        g.fillRect(x, y, fWidth + fHeight, fHeight * 2);
+        g.setColor(Color.white);
+        g.drawString(str, textX, textY);
     }
     
     

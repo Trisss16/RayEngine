@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.io.*;
 import java.util.ArrayList;
-import static lib.Engine.TILE_SIZE;
+
 
 public class Map {
     
@@ -122,10 +122,10 @@ public class Map {
 
                 //dibuja el cuadrado de la casilla un poco más pequeño y centrado para que el color de fondo de la apariencia de un contorno
                 g.fillRect(
-                    j * TILE_SIZE + 2, //x
-                    i * TILE_SIZE + 2, //y
-                    TILE_SIZE - 2,
-                    TILE_SIZE -2
+                    j * Engine.TILE_SIZE + 2, //x
+                    i * Engine.TILE_SIZE + 2, //y
+                    Engine.TILE_SIZE - 2,
+                    Engine.TILE_SIZE -2
                 );
                 
                 //dibuja el mapa sin el contorno
@@ -140,8 +140,8 @@ public class Map {
     }
     
     //regesa un objeto position indicando la casilla del mapa dentro de la que las coordenadas recibidas se encuentran
-    public static Position getTile(double xPos, double yPos) {
-        return new Position((int)(yPos / Engine.TILE_SIZE), (int)(xPos / Engine.TILE_SIZE));
+    public static Position getTile(double x, double y) {
+        return new Position((int)(y / Engine.TILE_SIZE), (int)(x / Engine.TILE_SIZE));
     }
     
     //checa si las posiciones recibidas quedan dentro de una pared

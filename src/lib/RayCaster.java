@@ -15,12 +15,18 @@ public class RayCaster {
     private int raysToCast;
     private Ray[] rays;
     
+    //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
+    private Dimension aspectRatio;
+    
     public RayCaster(Player p, Map map) {
         this.p = p;
         this.map = map;
         
-        this.raysToCast = 200;
         this.FOV = 60; //inicializa en 60 (el fov comun en la mayoria de juegos)
+        this.raysToCast = 200;
+        
+        //relacion de aspecto de 4:3, que es la que se solia usar en juegos retro
+        aspectRatio = new Dimension(4, 3);
         
         updatePlayerInfo();
         rays = new Ray[raysToCast];
@@ -28,7 +34,28 @@ public class RayCaster {
     
     //EN GRADOS
     public void setFOV(int FOV) {
+        //mantiene el fov como numero par, para mantener todo centrado al jugador siempre
+        if (FOV % 2 == 1) FOV++;
+        
+        /*caso especial, si el angulo es 360 lo mantiene sin normalizar. No afecta en nada realmente porque normalmente no se va a usar
+        un fov de 360, pero un angulo de 360 es igual a 0, por lo que si intentas castear rayos que cobran todos los angulos posibles 
+        estableciendo el fov a 360, en realidad quedarias con un aumento de 0, y todos los rayos tendrian exactamente el mismo angulo*/
+        if (FOV == 360) {
+            this.FOV = FOV;
+            return;
+        }
+        
+        FOV = (int) Engine.normalizeAngleDeg(FOV);
         this.FOV = FOV;
+    }
+    
+    public void setRaysToCast(int raysToCast) {
+        if (raysToCast % 2 == 1) raysToCast++; //igual con los rayos
+        this.raysToCast = raysToCast;
+        rays = new Ray[raysToCast];
+    }
+    
+    public void setAspectRatio() {
     }
     
     
@@ -45,7 +72,8 @@ public class RayCaster {
     
     
     private void castRays() {
-        double angleIncrement = Math.toRadians(FOV / (raysToCast * 1.0)); //incremento del angulo para cad
+        //incremento del angulo cada que se castea un nuevo rayo
+        double angleIncrement = Math.toRadians(FOV / (raysToCast * 1.0));
         double rayAngle = angle - angleIncrement * (raysToCast / 2);
         
         for (int i = 0; i < raysToCast; i++) {
@@ -55,16 +83,65 @@ public class RayCaster {
     }
     
     
-    //METODOS DE RENDERIZADO
+    //METODOS PARA RENDERIZADO
     
     public void renderSimulation3D(Graphics2D g) {
+        /*cada rayo va a dibujar una sola columna de pixeles de la vista en 3D, por lo que el ancho en pixeles será el mismo
+        que el número de rayos trazados. Para calcular el alto de la simulación se necesita aplicar una formula considerando
+        el aspect ratio, pues se conoce tanto el ancho y alto del aspect ratio como el ancho de la simulacion*/
+        int simWidth = raysToCast;
+        int simHeight = (simWidth * aspectRatio.height) / aspectRatio.width;
+        
+        Color shadow = new Color(0, 0, 0, 128); //dibujar sombras
+        
+        //escalas para acomodar al tamaño de la ventana
+        double widthScale = 1.0 * Engine.WIN_WIDTH / simWidth;
+        double heightScale = 1.0 * Engine.WIN_HEIGHT / simHeight;
+        g.scale(widthScale, heightScale);
+        
+        //fondo
+        g.setColor(Color.black);
+        g.fillRect(0, 0, simWidth, simHeight);
+        
+        for (int i = 0; i < raysToCast; i++) {
+            
+            double rayLength = rays[i].length;
+            
+            /*Se da un efecto de ojo de pez porque las columnas se hacen más pequeñas entra más largo sea el rayo y
+            los rayos más cercanos a las orillas son más largos. por eso se obtiene la diferencia de angulos del jugador
+            y del rayo, multiplicando la longitud por el coseno de este angulo se descompone en su componente horizontal
+            lo que arregla el efecto*/
+            double da = angle - rays[i].angle;
+            rayLength *= Math.cos(da);
+            
+            //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
+            int rayHeight = (int) (Engine.TILE_SIZE / rayLength * simHeight);
+            rayHeight = Math.min(rayHeight, simHeight);
+            
+            //para mantener la columna centrada
+            int offset = (simHeight - rayHeight) / 2;
+            
+            g.setColor(Color.red);
+            g.fillRect(i, offset, 1, rayHeight);
+            
+            //dibujar una sombra
+            if (rays[i].isHorizontal) {
+                g.setColor(shadow);
+                g.fillRect(i, offset, 1, rayHeight);
+            }
+        }
+        
+        g.scale(1, 1); //regresa a la escala normal
     }
+    
     
     public void renderView2D(Graphics2D g) {
         for (Ray i: rays) {
             i.drawRay(g);
         }
     }
+    
+    
 }
 
 
@@ -72,7 +149,7 @@ public class RayCaster {
 
 final class Ray {
     
-    private final double angle;
+    public final double angle;
     private final double px, py; //posicion del personaje en x y y
     private final int m, n; //orden de la matriz del mapa
     
@@ -83,7 +160,10 @@ final class Ray {
     
     private Point intersection;
     
+    //datos del rayo
     public final double length;
+    public final boolean isVertical;
+    public final boolean isHorizontal;
     
     
     //recibe el angulo en radianes
@@ -96,6 +176,8 @@ final class Ray {
         n = map.n;
         
         length = cast(map);
+        isVertical = foundVerticalIntersection;
+        isHorizontal = foundHorizontalIntersection;
     }
     
     //aplica la formula de la distancia entre dos puntos (que también podria considerarse la de la magnitud de un vector, pues un rayo es un vector)
@@ -115,32 +197,44 @@ final class Ray {
         Point pos = new Point((int) px, (int) py);
         
         //obtiene los puntos de intersección vertical y horizontal
-        Point horizontal = horizontalHit(map);
-        Point vertical = verticalHit(map);
+        Point horizontalHit = horizontalHit(map);
+        Point verticalHit = verticalHit(map);
         
         double hLength;
         double vLength;
         
-        //si se dio una interseccion horizontal calcula el valor del rayo horizontal, si no le da un valor aslto
+        //si se dio una interseccion horizontal calcula el valor del rayo horizontal, si no le da un valor muy alto
         if (foundHorizontalIntersection) {
-            hLength = distance(pos, horizontal);
+            hLength = distance(pos, horizontalHit);
         } else {
-            hLength = Integer.MAX_VALUE;
+            hLength = Double.POSITIVE_INFINITY;
         }
         
         //igual con la intersección vertical
         if (foundVerticalIntersection) {
-            vLength = distance(pos, vertical);
+            vLength = distance(pos, verticalHit);
         } else {
-            vLength = Integer.MAX_VALUE;
+            vLength = Double.POSITIVE_INFINITY;
+        }
+        
+        //primero verifica si si encontró el punto, si no regresa el valor más alto posible
+        /*ya que está regresando infinito, al hacer el calculo de la longitud de la columna de ese rayo siempre dará 0,
+        pues se estaria dividiendo entre infinito. Asi nunca se dibujaria la pared y no daria ningun conflicto*/
+        if (hLength == Double.POSITIVE_INFINITY && vLength == Double.POSITIVE_INFINITY) {
+            intersection = null;
+            return Double.POSITIVE_INFINITY;
         }
         
         //asigna la longitud más corta de entr los dos, además de guardar la posición
         if (hLength < vLength) {
-            intersection = horizontal;
+            intersection = horizontalHit;
+            foundVerticalIntersection = false;
+            foundHorizontalIntersection = true;
             return hLength;
         } else {
-            intersection = vertical;
+            intersection = verticalHit;
+            foundHorizontalIntersection = false;
+            foundVerticalIntersection = true;
             return vLength;
         }
     }
@@ -148,11 +242,8 @@ final class Ray {
     
     //ENCUENTRA TODAS LAS INTERSECCIONES HORIZONTALES
     private Point horizontalHit(Map map) {
-        //para casos donde el angulo apunte directamente a la derecha o izquierda se valida con cierta tolerancia
-        double tolerance = 0.001;
-        
-        boolean facingDown = angle > tolerance && angle < (Math.PI - tolerance);
-        boolean facingUp = angle > (Math.PI + tolerance) && angle < (2 * Math.PI - tolerance);
+        boolean facingDown = angle > 0 && angle < Math.PI;
+        boolean facingUp = angle > Math.PI && angle < 2 * Math.PI;
         
         boolean foundWall = false;
         
@@ -161,8 +252,12 @@ final class Ray {
         double firstY;
         
         //calcula la primera intersección en y, redondeando al valor del tamaño de la casilla
+        /*ya que se buscan las intersecciones horizontales, la posicion en y de cada intersección siempre se encontrará
+        alineada a las orillas de las casillas, por lo que para encontrar la primer intersección solo es necesario tomar
+        la posición en y del jugador y dependiendo de si está mirando arriba o abajo, llevarla a la siguiente casilla
+        hacia arriba o hacia abajo*/
         if (facingUp) {
-            firstY = Math.floor(py / Engine.TILE_SIZE) * Engine.TILE_SIZE - 1;
+            firstY = Math.floor(py / Engine.TILE_SIZE) * Engine.TILE_SIZE - 0.0001;
         } else if(facingDown) {
             firstY = Math.floor(py / Engine.TILE_SIZE) * Engine.TILE_SIZE + Engine.TILE_SIZE;
         } else { //cuando está mirando directamente a la izquierda o a la derecha no podrá encontrar jamás una intersección horizontal
@@ -180,6 +275,7 @@ final class Ray {
         double incrementX = 0;
         double incrementY = 0;
         
+        //los incrementos en y serán el tilesize, para mantenerlo siempre alineado a las casillas del mapa
         if (facingUp) incrementY = - Engine.TILE_SIZE;
         else if (facingDown) incrementY = Engine.TILE_SIZE;
         
@@ -212,12 +308,9 @@ final class Ray {
     
     
     //ENCUENTRA TODAS LAS INTERSECCIONES VERTICALES
-    private Point verticalHit(Map map) {
-        //para casos donde el angulo apunte directamente a la derecha o izquierda se valida con cierta tolerancia
-        double tolerance = 0.001;
-        
-        boolean facingLeft = angle > (Math.PI / 2 + tolerance) && angle < (3 * Math.PI / 2 - tolerance);
-        boolean facingRight = (angle > 3 * Math.PI / 2 + tolerance) || (angle < Math.PI / 2 - tolerance);
+    private Point verticalHit(Map map) {     
+        boolean facingLeft = angle > Math.PI / 2 && angle < 3 * Math.PI / 2;
+        boolean facingRight = angle > 3 * Math.PI / 2 || angle < Math.PI / 2;
         
         boolean foundWall = false;
         
@@ -226,10 +319,12 @@ final class Ray {
         double firstY;
         
         //calcula la primera intersección en x, redondeando al valor del tamaño de la casilla
+        /*de la misma forma que en las intersecciones horizontales, la posicion en x de la intersección se alinea a las
+        casillas, por lo que lleva la posicion en x a un valor que se alinee con las casillas*/
         if (facingRight) {
             firstX = Math.floor(px / Engine.TILE_SIZE) * Engine.TILE_SIZE + Engine.TILE_SIZE;
         } else if(facingLeft) {
-            firstX = Math.floor(px / Engine.TILE_SIZE) * Engine.TILE_SIZE - 1;
+            firstX = Math.floor(px / Engine.TILE_SIZE) * Engine.TILE_SIZE - 0.0001;
         } else { //cuando está mirando directamente hacia arriba o abajo es imposible encontrar una interseccion vertical
             return new Point((int) px, (int) py);
         }
@@ -278,6 +373,9 @@ final class Ray {
     
     public void drawRay(Graphics2D g) {
         g.setColor(Color.green);
-        g.drawLine((int) px, (int) py, intersection.x, intersection.y);
+        
+        if (intersection != null) {
+            g.drawLine((int) px, (int) py, intersection.x, intersection.y);
+        }
     }
 }

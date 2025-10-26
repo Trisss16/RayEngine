@@ -13,6 +13,9 @@ public final class Player {
     protected double x;
     protected double y;
     
+    //radio de la hitbox del jugador, para calcular colisiones
+    protected int hitboxRadius;
+    
     protected int lastMouseX;
     protected double angle; //angulo de la vista del jugador EN RADIANES
     protected double sensitibity;
@@ -30,8 +33,9 @@ public final class Player {
         this.v = v;
         this.x = x;
         this.y = y;
+        this.hitboxRadius = 10;
         
-        this.sensitibity = 0.5;
+        this.sensitibity = 0.3;
         
         try {
             mouseController = new Robot();
@@ -107,6 +111,9 @@ public final class Player {
 
         //normaliza la velocidad con el dt
         double speed = v * dt;
+        
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
 
         /*descompone el movimiento diagonal descrito por el angulo (angle) en sus componentes en x y en y, usando seno y coseno. De esta forma
         se obtiene el aumento para cada eje para llegar a la posición deseada individualmente. Ya que seno y coseno solo proporcionan valores
@@ -114,43 +121,62 @@ public final class Player {
         
         //adelante y atrás
         if (in.isKeyDown(KeyEvent.VK_W)) {
-            moveX += Math.cos(angle) * speed;
-            moveY += Math.sin(angle) * speed;
+            moveX += cos * speed;
+            moveY += sin * speed;
         }
         if (in.isKeyDown(KeyEvent.VK_S)) {
-            moveX -= Math.cos(angle) * speed;
-            moveY -= Math.sin(angle) * speed;
+            moveX -= cos * speed;
+            moveY -= sin * speed;
         }
 
         //izquierda y derecha
         if (in.isKeyDown(KeyEvent.VK_A)) {
-            moveX += Math.sin(angle) * speed;
-            moveY -= Math.cos(angle) * speed;
+            moveX += sin * speed;
+            moveY -= cos * speed;
         }
         if (in.isKeyDown(KeyEvent.VK_D)) {
-            moveX -= Math.sin(angle) * speed;
-            moveY += Math.cos(angle) * speed;
+            moveX -= sin * speed;
+            moveY += cos * speed;
         }
 
+        //la nueva posición que tomará el personaje
         double newX = x + moveX;
         double newY = y + moveY;
 
-        //commprueba si al modificar x colisiona
-        int tileX = (int)(newX / Engine.TILE_SIZE);
-        int tileY = (int)(y / Engine.TILE_SIZE);
-        if (map.map[tileY][tileX] == 0) {
+        
+        //si con newX no colisiona con pared lo asigna al personaje
+        if (!hasCollision((int) newX, (int) y, hitboxRadius)) {
             x = newX;
         }
-
-        //comprueba si al modificar y colisiona
-        tileX = (int)(x / Engine.TILE_SIZE);
-        tileY = (int)(newY / Engine.TILE_SIZE);
-        if (map.map[tileY][tileX] == 0) {
+        
+        //si con newY no colisiona con pared lo asigna al personaje
+        if (!hasCollision((int) x, (int) newY, hitboxRadius)) {
             y = newY;
         }
+        
+        /*no revisa las colisiones con ambas posiciones nuevas (newX y newY) porque si lo hiciera, aunque solo un eje tenga colision, ninguna de las dos posiciones se actualizaria.
+        Por eso checa ambas colisiones separadas, para que si encuentra una colision en un eje, solo se bloquee ese y puedas seguir moviendote en el otro eje*/
 
         tile = Map.getTile(x, y);
         System.out.println(tile);
+    }
+    
+    //revisa si una posicion colisiona con una pared en el radio especificado
+    protected boolean hasCollision(int px, int py, int radius) {
+        //las 8 posibles direcciones en las que podria detectarse una colision
+        int[][] directions = {
+            {-radius, -radius}, {0, -radius},
+            {radius, -radius}, {radius, 0},
+            {radius, radius}, {0, radius},
+            {-radius, radius}, {-radius, 0}
+        };
+        
+        for (int[] i: directions) {
+            if (map.insideOfWall(px + i[0], py + i[1])) {
+                return true;
+            }
+        }
+        return false;
     }
     
     

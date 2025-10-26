@@ -9,11 +9,15 @@ public class RayEngine {
         Map m = new Map("/res/map.txt");
         
         //crear player
-        Player p = new Player(100, 127, 127);
+        Player p = new Player(100, 100, 100);
         
         //iniciar el motor
         Engine e = new Engine(p, m);
-        e.setTargetFPS(60);
+        //e.setTargetFPS(60);
+        
+        //mantiene fps estables por encima de 10 mil rayos, incluso sin el renderizado, se mantenia arriba de 60 fps con 100 mil rayos
+        e.setRaysToCast(800); //indica cuantos rayos se lanzan
+        e.setFOV(60); //indica el angulo de vision
         e.start();
     }
     
