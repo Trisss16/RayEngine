@@ -1,37 +1,53 @@
 package lib;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.image.*;
 import javax.swing.*;
 
 public class Engine extends JFrame{
     
     public static final int TILE_SIZE = 64; //cada celda medirá 64x64 unidades, y sus sprites tendrán esa cantidad de pixeles
+    public static  int WIN_WIDTH = 800;
+    public static int WIN_HEIGHT = 600;
     
     //COMPONENTES
-    private Player p;
+    private final Player p;
     private final Map map;
     private final Canvas c;
     public final Input in;
     
-    private RayCaster raycaster;
+    private final RayCaster raycaster;
     
     //para ver loq ue sucede en la vista 2d
     private final Canvas view2d;
-    private final JFrame frame2d;
+    private final JDialog debugScreen;
+    
+    //para activar o desactivar pantalla completa
+    private final GraphicsDevice device;
+    
+    //para mostrar o no mostrar el cursor
+    private final Cursor defaultCursor;
+    private final Cursor hiddenCursor;
     
     
     //ATRIBUTOS
     private boolean running;
     
-    public static  int WIN_WIDTH = 800;
-    public static int WIN_HEIGHT = 600;
-    
     private double deltaTime;
     private int targetFPS;
     private boolean paused;
+    private boolean debugActive;
     
-    public static void setWindowSize(Dimension d) {
+    //las dimensiones reales del frame, se mantienen incluso cuando el frame pasa
+    //a pantalla completa (para regresar al tamaño correcto con toggleFullscreen)
+    private int currentWidth;
+    private int currentHeight;
+    
+    private boolean fullscreen;
+    
+    
+    private static void setWinWidthAndHeight(Dimension d) {
         WIN_WIDTH = d.width;
         WIN_HEIGHT = d.height;
     }
@@ -42,6 +58,7 @@ public class Engine extends JFrame{
         //canvas de renderizado
         this.c = new Canvas();
         c.setPreferredSize(new Dimension(WIN_WIDTH, WIN_HEIGHT));
+        c.setFocusable(true);
         
         //listeners de eventos
         this.in = new Input();
@@ -53,11 +70,10 @@ public class Engine extends JFrame{
         //canvas para la vista 2d
         this.view2d = new Canvas();
         view2d.setPreferredSize(new Dimension(map.n * TILE_SIZE, map.m * TILE_SIZE));
-        frame2d = new JFrame();
-        frame2d.add(view2d);
-        frame2d.pack();
-        frame2d.setResizable(false);
-        //frame2d.setFocusableWindowState(false); //lo hace no focuseable, solo para visualizar el mapa
+        debugScreen = new JDialog(this);
+        debugScreen.add(view2d);
+        debugScreen.pack();
+        debugScreen.setResizable(false);
         
         //guarda el player y le agrega el input
         this.p = player;
@@ -76,6 +92,17 @@ public class Engine extends JFrame{
         targetFPS = -1;
         running = false;
         paused = false;
+        debugActive = true;
+        currentWidth = WIN_WIDTH;
+        currentHeight = WIN_HEIGHT;
+        fullscreen = false;
+        
+        device = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
+        
+        defaultCursor = Cursor.getDefaultCursor();
+        
+        BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        hiddenCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0,0), "hidden");
         
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setFocusable(true);
@@ -89,6 +116,8 @@ public class Engine extends JFrame{
     public void togglePause() {
         paused = !paused;
         System.out.println("Pausado: " + paused);
+        
+        this.setCursor(paused ? defaultCursor : hiddenCursor);
     }
     
     
@@ -114,10 +143,64 @@ public class Engine extends JFrame{
     }
     
     
+    public void setTargetFPS(int fps) {
+        targetFPS = fps;
+    }
+
+    //modifica las dimensiones del frame principal, además sale de pantalla completa en caso de que esté activada
+    public void setWindowSize(Dimension d) {
+        device.setFullScreenWindow(null); //sale de pantalla completa
+        currentWidth = d.width;
+        currentHeight = d.height;
+        Engine.setWinWidthAndHeight(d);
+        c.setPreferredSize(d);
+        this.pack();
+        this.setLocationRelativeTo(null);
+        c.createBufferStrategy(2); //Recrea el buffer strategy con el nuevo tamaño
+        c.requestFocus();
+    }
+
+    //activa la pantalla completa
+    public void setFullscreen() {
+        fullscreen = true;
+        setDebugScreenActive(false);
+        device.setFullScreenWindow(this);
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Engine.setWinWidthAndHeight(screenSize);
+        c.setPreferredSize(screenSize);
+        c.createBufferStrategy(2); //recrea el buffer strategy con el nuevo tamaño
+    }
+    
+    //activa o desactiva pantalla completa
+    public void toggleFullscreen() {
+        fullscreen = !fullscreen;
+        if (fullscreen) {
+            setFullscreen();
+        } else {
+            setWindowSize(new Dimension(currentWidth, currentHeight));
+        }
+        c.requestFocus();
+    }
+    
+    public void setDebugScreenActive(boolean active) {
+        debugActive = active;
+        debugScreen.setVisible(active);
+        c.requestFocus(); //vuelve a focusear el frame porque el focus se va a la vista 2d
+    }
+    
+    public void toggleDebugScreen() {
+        setDebugScreenActive(!debugActive);
+        c.requestFocus(); //vuelve a focusear el frame porque el focus se va a la vista 2d
+    }
+    
+    
+    
+    
     public void start() {
         running = true;
         this.setVisible(true);
-        frame2d.setVisible(true);
+        if (debugActive) debugScreen.setVisible(true);
+        c.requestFocus();
         
         /*para el renderizado utiliza un canvas en vez de hacer override de algun componente de jswing, pues usando canvas controlas exactamente cuando
         quieres que dibuje y limpie (al inicio de cada frame). Usa un bufferStrategy de 2, es decir 2 buffers. Mientras un frame se muestra, el otro frame se renderiza*/
@@ -130,9 +213,34 @@ public class Engine extends JFrame{
         while(running) {
             long start = System.nanoTime();
             
+            
+            //pausa o resume el juego
+            if (in.isKeyReleased(KeyEvent.VK_ESCAPE)) {
+                togglePause();
+                if (paused) System.out.println("JUEGO PAUSADO");
+                else System.out.println("JUEGO RESUMIDO");
+            }
+            
+            //desactiva o activa la pantalla de debug
+            if (in.isKeyReleased(KeyEvent.VK_F3)) toggleDebugScreen();
+        
+            //activa o desactiva la pantalla completa
+            if (in.isKeyReleased(KeyEvent.VK_F11)) toggleFullscreen();
+            
+            /*llama todo esto fuera de update para que incluso con el juego pausado se pueda resumir,
+            activar y desactivar la pantalla de debug o entrar y salir de pantalla completa*/
+            
+            
+            
+            //update
             if (!paused) update(deltaTime);
+            
+            //Render
             render(bs);
-            render2d(bs2d);
+            if (debugActive) render2d(bs2d);
+            in.clearReleased(); //actualiza el input(para los metodos released)
+            
+            
             
             long finish = System.nanoTime();
             
@@ -171,15 +279,22 @@ public class Engine extends JFrame{
     }
     
     
-    public void setTargetFPS(int fps) {
-        targetFPS = fps;
-    }
     
+    
+    //UPDATE Y RENDER
     
     private void update(double dt) {
+        
         //evita que las teclas y botones que estaban activos cuando se perdio el foco se queden activadas
         if (!this.isFocused())in.allFalse();
         
+        //pausa el juego cuando se pierde el focus
+        if (!this.isFocused()) {
+            paused = false;
+            togglePause(); //para llamar a togglePause y modificar el mouse
+        }
+        
+        //metodos update de los componentes
         p.update(dt);
         raycaster.update(dt);
     }
@@ -196,10 +311,8 @@ public class Engine extends JFrame{
         g.clearRect(0, 0, c.getWidth(), c.getHeight());
         
         
-        
         //todo lo que se quiere renderizar
             raycaster.renderSimulation3D(g);
-        
         
         
         //muestra el frame dibujar
@@ -210,11 +323,7 @@ public class Engine extends JFrame{
     //renderiza la vista en 2d
     private void render2d(BufferStrategy bs) {
         Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-        
-        //limpia el frame anterior
         g.clearRect(0, 0, view2d.getWidth(), view2d.getHeight());
-        
-        
         
         //RENDERIZADO
             g.setColor(Color.GRAY);
@@ -226,11 +335,9 @@ public class Engine extends JFrame{
             
             //información
             drawTextBox(g, String.format("dt: %.6f", deltaTime), 10, 10);
-            if (paused) drawTextBox(g, "PAUSADO", WIN_WIDTH / 2, 10);
+            if (paused) drawTextBox(g, "PAUSADO", view2d.getWidth() / 2, 10);
         
-        
-        
-        //muestra el frame dibujar
+
         g.dispose();
         bs.show();
     }
@@ -256,11 +363,6 @@ public class Engine extends JFrame{
     
     
     //UTILIDADES
-    
-    public static void setWindowSize(int width, int height) {
-        WIN_WIDTH = width;
-        WIN_HEIGHT = height;
-    }
     
     //normaliza un angulo, manteniendolo dentro del rango de 0 a 2pi
     public static double normalizeAngleRad(double a) {

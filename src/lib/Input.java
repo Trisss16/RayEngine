@@ -10,9 +10,11 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
 
     //teclado
     private final boolean[] keys = new boolean[256];
+    private final boolean[] keysReleased = new boolean[256];
 
     //mouse
     private final boolean[] mouseButtons = new boolean[5];
+    private final boolean[] mouseButtonsReleased = new boolean[5];
     private int mouseX = 0;
     private int mouseY = 0;
     
@@ -35,23 +37,24 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
         return keys[keyCode];
     }
     
+    public boolean isKeyReleased(int keyCode) {
+        return keysReleased[keyCode];
+    }
+    
     //en el array de teclas, marca cada tecla que ha sido presionada como true
     @Override
     public void keyPressed(KeyEvent ev) {
         int key = ev.getKeyCode();
-        if (key < keys.length) keys[key] = true;
+        if (key < keys.length && key >= 0) keys[key] = true;
     }
 
     //lo mismo que keyPressed pero marca las teclas liberadas como false
     @Override
     public void keyReleased(KeyEvent ev) {
         int key = ev.getKeyCode();
-        if (key < keys.length)
+        if (key < keys.length && key >= 0) {
             keys[key] = false;
-        
-        // detectar esc solo una vez al soltar
-        if (key == KeyEvent.VK_ESCAPE) {
-            e.togglePause();
+            keysReleased[key] = true;
         }
     }
 
@@ -62,6 +65,10 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
     
     public boolean isMouseDown(int button) {
         return mouseButtons[button];
+    }
+    
+    public boolean isMouseReleased(int button) {
+        return mouseButtonsReleased[button];
     }
 
     public int getMouseX() {
@@ -74,12 +81,16 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (e.getButton() < mouseButtons.length) mouseButtons[e.getButton()] = true;
+        if (e.getButton() < mouseButtons.length && e.getButton() >= 0) mouseButtons[e.getButton()] = true;
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.getButton() < mouseButtons.length) mouseButtons[e.getButton()] = false;
+        int button = e.getButton();
+        if (button < mouseButtons.length && button >= 0) {
+            mouseButtons[button] = false;
+            mouseButtonsReleased[button] = true;
+        }
     }
 
     @Override
@@ -98,4 +109,17 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
     @Override public void mouseClicked(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
+    
+    
+    
+    //update de las teclas liueradas
+    public void clearReleased() {
+        for (int i = 0; i < keysReleased.length; i++) {
+            keysReleased[i] = false;
+        }
+        
+        for (int i = 0; i < mouseButtonsReleased.length; i++) {
+            mouseButtonsReleased[i] = false;
+        }
+    }
 }

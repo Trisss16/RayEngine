@@ -1,5 +1,6 @@
 package rayengine;
 
+import java.awt.Dimension;
 import lib.*;
 
 public class RayEngine {
@@ -13,6 +14,7 @@ public class RayEngine {
         
         //iniciar el motor
         Engine e = new Engine(p, m);
+        e.setWindowSize(new Dimension(800, 600));
         e.setTargetFPS(60);
         
         //mantiene fps estables por encima de 10 mil rayos, incluso sin el renderizado, se mantenia arriba de 60 fps con 100 mil rayos

@@ -46,8 +46,8 @@ public final class Player {
         this.angle = 0;
     }
     
-    public Point getPlayerPos() {
-        return new Point((int) x, (int) y);
+    public DPoint getPlayerPos() {
+        return new DPoint(x, y);
     }
     
     
@@ -81,11 +81,13 @@ public final class Player {
     //recibe el angulo y lo guarda convertido a radianes
     public void setAngle(double newAngle) {
         angle = Math.toRadians(newAngle);
+        //angle = Engine.normalizeAngleRad(angle);
         normalizeAngle();
     }
     
     public void addAngle(double newAngle) {
         angle += Math.toRadians(newAngle);
+        //angle = Engine.normalizeAngleRad(angle);
         normalizeAngle();
     }
     
@@ -145,20 +147,20 @@ public final class Player {
 
         
         //si con newX no colisiona con pared lo asigna al personaje
-        if (!hasCollision((int) newX, (int) y, hitboxRadius)) x = newX;
+        if (!hasCollision(newX, y, hitboxRadius)) x = newX;
         
         //si con newY no colisiona con pared lo asigna al personaje
-        if (!hasCollision((int) x, (int) newY, hitboxRadius)) y = newY;
+        if (!hasCollision(x, newY, hitboxRadius)) y = newY;
         
         /*no revisa las colisiones con ambas posiciones nuevas (newX y newY) porque si lo hiciera, aunque solo un eje tenga colision, ninguna de las dos posiciones se actualizaria.
         Por eso checa ambas colisiones separadas, para que si encuentra una colision en un eje, solo se bloquee ese y puedas seguir moviendote en el otro eje*/
 
         tile = Map.getTile(x, y);
-        System.out.println(tile);
+        //System.out.println(tile);
     }
     
     //revisa si una posicion colisiona con una pared en el radio especificado
-    protected boolean hasCollision(int px, int py, int radius) {
+    protected boolean hasCollision(double px, double py, int radius) {
         //las 8 posibles direcciones en las que podria detectarse una colision
         int[][] directions = {
             {-radius, -radius}, {0, -radius},
@@ -201,8 +203,8 @@ public final class Player {
         
         //dibujar el personaje de prueba
         g.setColor(Color.red);
-        Point pPos = getPlayerPos();
-        g.fillRect(pPos.x - pWidth/2, pPos.y - pWidth/2, pWidth, pWidth); //dibuja el personaje centrado
+        DPoint pPos = getPlayerPos();
+        g.fillRect((int) (pPos.x - pWidth/2), (int) (pPos.y - pWidth/2), pWidth, pWidth); //dibuja el personaje centrado
         drawLine(g);
     }
     

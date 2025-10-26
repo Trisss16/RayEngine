@@ -8,7 +8,7 @@ public class RayCaster {
     private final Map map;
     private final Player p;
     
-    private Point playerPos;
+    private DPoint playerPos;
     private double angle; //angulo del jugador en radianes
     
     private int FOV; //field of view, que tantos grados puede ver el jugador
@@ -171,7 +171,7 @@ final class Ray {
     
     
     //recibe el angulo en radianes
-    public Ray(double angle, Point pos, Map map) {
+    public Ray(double angle, DPoint pos, Map map) {
         this.angle = angle;
         px = pos.x;
         py = pos.y;
@@ -373,18 +373,5 @@ final class Ray {
         if (intersection != null) {
             g.drawLine((int) px, (int) py, (int) intersection.x, (int) intersection.y);
         }
-    }
-}
-
-
-
-class DPoint {
-    
-    public final double x;
-    public final double y;
-    
-    public DPoint(double x, double y) {
-        this.x = x;
-        this.y = y;
     }
 }
