@@ -43,7 +43,7 @@ public final class Player {
             mouseController = null;
         }
         
-        setAngle(-90);
+        this.angle = 0;
     }
     
     public Point getPlayerPos() {
@@ -145,14 +145,10 @@ public final class Player {
 
         
         //si con newX no colisiona con pared lo asigna al personaje
-        if (!hasCollision((int) newX, (int) y, hitboxRadius)) {
-            x = newX;
-        }
+        if (!hasCollision((int) newX, (int) y, hitboxRadius)) x = newX;
         
         //si con newY no colisiona con pared lo asigna al personaje
-        if (!hasCollision((int) x, (int) newY, hitboxRadius)) {
-            y = newY;
-        }
+        if (!hasCollision((int) x, (int) newY, hitboxRadius)) y = newY;
         
         /*no revisa las colisiones con ambas posiciones nuevas (newX y newY) porque si lo hiciera, aunque solo un eje tenga colision, ninguna de las dos posiciones se actualizaria.
         Por eso checa ambas colisiones separadas, para que si encuentra una colision en un eje, solo se bloquee ese y puedas seguir moviendote en el otro eje*/

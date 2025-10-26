@@ -141,12 +141,18 @@ public class Map {
     
     //regesa un objeto position indicando la casilla del mapa dentro de la que las coordenadas recibidas se encuentran
     public static Position getTile(double x, double y) {
-        return new Position((int)(y / Engine.TILE_SIZE), (int)(x / Engine.TILE_SIZE));
+        int tileX = (int) Math.floor(x / Engine.TILE_SIZE);
+        int tileY = (int) Math.floor(y / Engine.TILE_SIZE);
+        //return new Position((int)(y / Engine.TILE_SIZE), (int)(x / Engine.TILE_SIZE));
+        return new Position(tileY, tileX);
     }
     
     //checa si las posiciones recibidas quedan dentro de una pared
     public boolean insideOfWall(double x, double y) {
         Position p = getTile(x, y);
-        return map[p.m][p.n] == 1;
+        if (p.m >= 0 && p.n >= 0 && p.m < m && p.n < n) {
+            return map[p.m][p.n] == 1;
+        }
+        return false;
     }
 }

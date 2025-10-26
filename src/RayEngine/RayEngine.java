@@ -13,7 +13,7 @@ public class RayEngine {
         
         //iniciar el motor
         Engine e = new Engine(p, m);
-        //e.setTargetFPS(60);
+        e.setTargetFPS(60);
         
         //mantiene fps estables por encima de 10 mil rayos, incluso sin el renderizado, se mantenia arriba de 60 fps con 100 mil rayos
         e.setRaysToCast(800); //indica cuantos rayos se lanzan

@@ -1,6 +1,7 @@
 package lib;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 
 public class RayCaster {
     
@@ -55,7 +56,8 @@ public class RayCaster {
         rays = new Ray[raysToCast];
     }
     
-    public void setAspectRatio() {
+    public void setAspectRatio(int w, int h) {
+        aspectRatio = new Dimension(w, h);
     }
     
     
@@ -81,7 +83,7 @@ public class RayCaster {
             rayAngle += angleIncrement;
         }
     }
-    
+
     
     //METODOS PARA RENDERIZADO
     
@@ -97,6 +99,7 @@ public class RayCaster {
         //escalas para acomodar al tamaño de la ventana
         double widthScale = 1.0 * Engine.WIN_WIDTH / simWidth;
         double heightScale = 1.0 * Engine.WIN_HEIGHT / simHeight;
+        AffineTransform old = g.getTransform();
         g.scale(widthScale, heightScale);
         
         //fondo
@@ -112,6 +115,7 @@ public class RayCaster {
             y del rayo, multiplicando la longitud por el coseno de este angulo se descompone en su componente horizontal
             lo que arregla el efecto*/
             double da = angle - rays[i].angle;
+            da = Engine.normalizeAngleRad(da);
             rayLength *= Math.cos(da);
             
             //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
@@ -131,7 +135,7 @@ public class RayCaster {
             }
         }
         
-        g.scale(1, 1); //regresa a la escala normal
+        g.setTransform(old);
     }
     
     
@@ -158,7 +162,7 @@ final class Ray {
     private boolean foundHorizontalIntersection = false;
     private boolean foundVerticalIntersection = false;
     
-    private Point intersection;
+    private DPoint intersection;
     
     //datos del rayo
     public final double length;
@@ -181,7 +185,7 @@ final class Ray {
     }
     
     //aplica la formula de la distancia entre dos puntos (que también podria considerarse la de la magnitud de un vector, pues un rayo es un vector)
-    private double distance(Point p1, Point p2) {
+    private double distance(DPoint p1, DPoint p2) {
         double x1 = p1.x;
         double x2 = p2.x;
         double y1 = p1.y;
@@ -194,28 +198,20 @@ final class Ray {
     }
     
     private double cast(Map map) {
-        Point pos = new Point((int) px, (int) py);
+        DPoint pos = new DPoint(px, py);
         
         //obtiene los puntos de intersección vertical y horizontal
-        Point horizontalHit = horizontalHit(map);
-        Point verticalHit = verticalHit(map);
+        DPoint horizontalHit = horizontalHit(map);
+        DPoint verticalHit = verticalHit(map);
         
         double hLength;
         double vLength;
         
         //si se dio una interseccion horizontal calcula el valor del rayo horizontal, si no le da un valor muy alto
-        if (foundHorizontalIntersection) {
-            hLength = distance(pos, horizontalHit);
-        } else {
-            hLength = Double.POSITIVE_INFINITY;
-        }
+        hLength = foundHorizontalIntersection && horizontalHit != null ? distance(pos, horizontalHit) : Double.POSITIVE_INFINITY;
         
         //igual con la intersección vertical
-        if (foundVerticalIntersection) {
-            vLength = distance(pos, verticalHit);
-        } else {
-            vLength = Double.POSITIVE_INFINITY;
-        }
+        vLength = foundVerticalIntersection && verticalHit != null ? distance(pos, verticalHit) : Double.POSITIVE_INFINITY;
         
         //primero verifica si si encontró el punto, si no regresa el valor más alto posible
         /*ya que está regresando infinito, al hacer el calculo de la longitud de la columna de ese rayo siempre dará 0,
@@ -241,7 +237,7 @@ final class Ray {
     
     
     //ENCUENTRA TODAS LAS INTERSECCIONES HORIZONTALES
-    private Point horizontalHit(Map map) {
+    private DPoint horizontalHit(Map map) {
         boolean facingDown = angle > 0 && angle < Math.PI;
         boolean facingUp = angle > Math.PI && angle < 2 * Math.PI;
         
@@ -261,7 +257,7 @@ final class Ray {
         } else if(facingDown) {
             firstY = Math.floor(py / Engine.TILE_SIZE) * Engine.TILE_SIZE + Engine.TILE_SIZE;
         } else { //cuando está mirando directamente a la izquierda o a la derecha no podrá encontrar jamás una intersección horizontal
-            return new Point((int) px, (int) py);
+            return null;
         }
         
         //ahora aplicar la formula para encontrar la primer intersección en x
@@ -282,7 +278,7 @@ final class Ray {
         incrementX = incrementY / Math.tan(angle);
         
         //empieza el loop de revisión, solo para de revisar cuando sale del mapa
-        while(nextX > 0 && nextX < n * Engine.TILE_SIZE && nextY > 0 && nextY < m * Engine.TILE_SIZE ) {
+        while(nextX >= 0 && nextX <= n * Engine.TILE_SIZE && nextY >= 0 && nextY <= m * Engine.TILE_SIZE ) {
             
             //si encuentra una pared en un incremento lo marca y deja de buscar
             if (map.insideOfWall(nextX, nextY)) {
@@ -298,17 +294,17 @@ final class Ray {
         //si encontró la pared regresa la posición en donde la encontró
         if (foundWall) {
             foundHorizontalIntersection = true;
-            return new Point((int) nextX, (int) nextY);
+            return new DPoint(nextX, nextY);
         }
         
-        //si no la encontró regresa la posición del jugador
-        return new Point((int) px, (int) py);
+        //si no la encontró regresa null
+        return null;
     }
     
     
     
     //ENCUENTRA TODAS LAS INTERSECCIONES VERTICALES
-    private Point verticalHit(Map map) {     
+    private DPoint verticalHit(Map map) {     
         boolean facingLeft = angle > Math.PI / 2 && angle < 3 * Math.PI / 2;
         boolean facingRight = angle > 3 * Math.PI / 2 || angle < Math.PI / 2;
         
@@ -326,7 +322,7 @@ final class Ray {
         } else if(facingLeft) {
             firstX = Math.floor(px / Engine.TILE_SIZE) * Engine.TILE_SIZE - 0.0001;
         } else { //cuando está mirando directamente hacia arriba o abajo es imposible encontrar una interseccion vertical
-            return new Point((int) px, (int) py);
+            return null;
         }
         
         //ahora aplicar la formula para encontrar la primer intersección en y
@@ -346,7 +342,7 @@ final class Ray {
         incrementY = incrementX * Math.tan(angle);
         
         //empieza el loop de revisión, solo para de revisar cuando sale del mapa
-        while(nextX > 0 && nextX < n * Engine.TILE_SIZE && nextY > 0 && nextY < m * Engine.TILE_SIZE ) {
+        while(nextX >= 0 && nextX <= n * Engine.TILE_SIZE && nextY >= 0 && nextY <= m * Engine.TILE_SIZE ) {
             
             //si encuentra una pared en un incremento lo marca y deja de buscar
             if (map.insideOfWall(nextX, nextY)) {
@@ -362,20 +358,33 @@ final class Ray {
         //si encontró la pared regresa la posición en donde la encontró
         if (foundWall) {
             foundVerticalIntersection = true;
-            return new Point((int) nextX, (int) nextY);
+            return new DPoint(nextX, nextY);
         }
         
-        //si no la encontró regresa la posición del jugador
-        return new Point((int) px, (int) py);
+        //si no la encontró regresa null
+        return null;
     }
     
     
-    
+ 
     public void drawRay(Graphics2D g) {
         g.setColor(Color.green);
         
         if (intersection != null) {
-            g.drawLine((int) px, (int) py, intersection.x, intersection.y);
+            g.drawLine((int) px, (int) py, (int) intersection.x, (int) intersection.y);
         }
+    }
+}
+
+
+
+class DPoint {
+    
+    public final double x;
+    public final double y;
+    
+    public DPoint(double x, double y) {
+        this.x = x;
+        this.y = y;
     }
 }
