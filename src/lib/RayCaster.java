@@ -119,7 +119,7 @@ public class RayCaster {
             rayLength *= Math.cos(da);
             
             //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
-            int rayHeight = (int) (Engine.TILE_SIZE / rayLength * simHeight);
+            int rayHeight = (int) Math.round(Engine.TILE_SIZE / rayLength * simHeight);
             rayHeight = Math.min(rayHeight, simHeight);
             
             //para mantener la columna centrada
@@ -169,6 +169,8 @@ final class Ray {
     public final boolean isVertical;
     public final boolean isHorizontal;
     
+    public final DPoint hit;
+    
     
     //recibe el angulo en radianes
     public Ray(double angle, DPoint pos, Map map) {
@@ -182,6 +184,7 @@ final class Ray {
         length = cast(map);
         isVertical = foundVerticalIntersection;
         isHorizontal = foundHorizontalIntersection;
+        hit = intersection;
     }
     
     //aplica la formula de la distancia entre dos puntos (que también podria considerarse la de la magnitud de un vector, pues un rayo es un vector)

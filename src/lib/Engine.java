@@ -92,7 +92,7 @@ public class Engine extends JFrame{
         targetFPS = -1;
         running = false;
         paused = false;
-        debugActive = true;
+        debugActive = false;
         currentWidth = WIN_WIDTH;
         currentHeight = WIN_HEIGHT;
         fullscreen = false;
@@ -183,6 +183,7 @@ public class Engine extends JFrame{
     }
     
     public void setDebugScreenActive(boolean active) {
+        if (active && fullscreen) return; //no lo activa si está en pantalla completa
         debugActive = active;
         debugScreen.setVisible(active);
         c.requestFocus(); //vuelve a focusear el frame porque el focus se va a la vista 2d

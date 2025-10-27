@@ -18,7 +18,7 @@ public final class Player {
     
     protected int lastMouseX;
     protected double angle; //angulo de la vista del jugador EN RADIANES
-    protected double sensitibity;
+    protected double sensitivity;
     
     protected Input in;
     protected Map map;
@@ -35,7 +35,7 @@ public final class Player {
         this.y = y;
         this.hitboxRadius = 10;
         
-        this.sensitibity = 0.3;
+        this.sensitivity = 0.3;
         
         try {
             mouseController = new Robot();
@@ -94,6 +94,10 @@ public final class Player {
     public void normalizeAngle() {
         angle = angle % (2 * Math.PI);
         if (angle < 0) angle += 2 * Math.PI;
+    }
+    
+    public void setSensitibity(double sensitivity) {
+        this.sensitivity = sensitivity;
     }
     
     
@@ -188,12 +192,13 @@ public final class Player {
         
         //calcula cuanto avanzó el mouse desde el frame anterior y lo transforma a un angulo que suma al angulo actual
         double offset = in.getMouseX() - (int) dim.getWidth() / 2;
-        offset *= sensitibity;
+        offset *= sensitivity;
         addAngle(offset);
         
         //regresa el mouse al centro
         mouseController.mouseMove(centerX, centerY);
     }
+    
     
     
     /*METODOS DE DIBUJO*/

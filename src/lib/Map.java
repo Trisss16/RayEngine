@@ -28,6 +28,21 @@ public class Map {
         }
     }
     
+    public Map(int[][] grid) {
+        int gridN = grid[0].length;
+        
+        for (int[] i: grid) {
+            if (i.length != gridN) {
+                System.out.println("Mapa invalido, lineas de diferentes longitudes.");
+                System.exit(0);
+            }
+        }
+        
+        map = grid;
+        m = map.length;
+        n = map[0].length;
+    }
+    
     protected final int[][] openMapFile(String path) {
         int[][] result = new int[1][1];
         //intenta abrir el archivo del mapa
@@ -74,7 +89,7 @@ public class Map {
         //continua leyendo el resto, si alguna linea tiene un no de elementos que la primera regresa
         while(line != null) {
             if (line.split(" ").length != n1) {
-                System.out.println("Lineas de diferentes longitudes.");
+                System.out.println("Mapa invalido, ineas de diferentes longitudes.");
                 return new int[1][1];
             }
             
