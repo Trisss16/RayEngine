@@ -10,10 +10,12 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
 
     //teclado
     private final boolean[] keys = new boolean[256];
+    private final boolean[] keysWasPressed = new boolean [256];
     private final boolean[] keysReleased = new boolean[256];
 
     //mouse
     private final boolean[] mouseButtons = new boolean[5];
+    private final boolean[] mouseButtonsWasPressed = new boolean[5];
     private final boolean[] mouseButtonsReleased = new boolean[5];
     private int mouseX = 0;
     private int mouseY = 0;
@@ -45,17 +47,17 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
     @Override
     public void keyPressed(KeyEvent ev) {
         int key = ev.getKeyCode();
-        if (key < keys.length && key >= 0) keys[key] = true;
+        if (key < keys.length && key >= 0) {
+            keys[key] = true;
+            keysWasPressed[key] = true;
+        }
     }
 
     //lo mismo que keyPressed pero marca las teclas liberadas como false
     @Override
     public void keyReleased(KeyEvent ev) {
         int key = ev.getKeyCode();
-        if (key < keys.length && key >= 0) {
-            keys[key] = false;
-            keysReleased[key] = true;
-        }
+        if (key < keys.length && key >= 0) keys[key] = false;
     }
 
     @Override public void keyTyped(KeyEvent e) {}
@@ -87,10 +89,7 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
     @Override
     public void mouseReleased(MouseEvent e) {
         int button = e.getButton();
-        if (button < mouseButtons.length && button >= 0) {
-            mouseButtons[button] = false;
-            mouseButtonsReleased[button] = true;
-        }
+        if (button < mouseButtons.length && button >= 0) mouseButtons[button] = false;
     }
 
     @Override
@@ -120,6 +119,63 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
         
         for (int i = 0; i < mouseButtonsReleased.length; i++) {
             mouseButtonsReleased[i] = false;
+        }
+    }
+    
+    
+    
+    //ACTUALIZACION DE LOS METODOS RELEASED
+    
+    public void update() {
+        updateKeys();
+        updateMouseButtons();
+    }
+    
+    private void updateKeys() {
+        for (int i = 0; i < keys.length; i++) {
+            
+            if (keys[i]) {
+                
+                //si está presionado actualmente no puede ser liberado
+                keysReleased[i] = false;
+                keysWasPressed[i] = true;
+                
+            } else {
+                
+                //si no está presionado
+                if (keysWasPressed[i]) {
+                    keysReleased[i] = true;
+                    keysWasPressed[i] = false;
+                } else {
+                    keysReleased[i] = false;
+                }
+                
+            }
+            
+        }
+    }
+    
+    private void updateMouseButtons() {
+        for (int i = 0; i < mouseButtons.length; i++) {
+            
+            if (mouseButtons[i]) {
+                
+                //si está presionado actualmente no puede ser liberado
+                mouseButtonsReleased[i] = false;
+                mouseButtonsWasPressed[i] = true;
+                
+            } else {
+                
+                //si no está presionado
+                if (mouseButtonsWasPressed[i]) {
+                    mouseButtonsReleased[i] = true;
+                    mouseButtonsWasPressed[i] = false;
+                } else {
+                    mouseButtonsReleased[i] = false;
+                }
+                
+            }
+            
         }
     }
 }

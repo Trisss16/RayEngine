@@ -1,2 +1,0 @@
-lib.Ray
-lib.RayCaster

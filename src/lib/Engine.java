@@ -201,6 +201,7 @@ public class Engine extends JFrame{
         running = true;
         this.setVisible(true);
         if (debugActive) debugScreen.setVisible(true);
+        this.setCursor(hiddenCursor);
         c.requestFocus();
         
         /*para el renderizado utiliza un canvas en vez de hacer override de algun componente de jswing, pues usando canvas controlas exactamente cuando
@@ -214,6 +215,7 @@ public class Engine extends JFrame{
         while(running) {
             long start = System.nanoTime();
             
+            in.update();
             
             //pausa o resume el juego
             if (in.isKeyReleased(KeyEvent.VK_ESCAPE)) {
@@ -239,7 +241,7 @@ public class Engine extends JFrame{
             //Render
             render(bs);
             if (debugActive) render2d(bs2d);
-            in.clearReleased(); //actualiza el input(para los metodos released)
+            //in.clearReleased(); //actualiza el input(para los metodos released)
             
             
             

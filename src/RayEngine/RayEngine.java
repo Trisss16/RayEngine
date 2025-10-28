@@ -29,24 +29,18 @@ public class RayEngine {
         
         //iniciar el motor
         Engine e = new Engine(p, m);
-        e.setWindowSize(new Dimension(400, 300));
-        e.setTargetFPS(60);
+        e.setWindowSize(new Dimension(800, 600));
+        //e.setTargetFPS(60);
         e.setRaysToCast(800); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
-        
-        //e.add(i.sprite);
-        JDialog dialog = new JDialog();
-        dialog.add(new CustomPanel());
-        dialog.pack();
-        dialog.setLocationRelativeTo(e);
-        dialog.setVisible(true);
         e.start();
     }
     
 }
 
 
-class CustomPanel extends JPanel {
+//prueba de funcionamiento de la clase Sprite
+/*class CustomPanel extends JPanel {
     
     private final Sprite spr;
     
@@ -68,4 +62,4 @@ class CustomPanel extends JPanel {
         
         spr.drawSprite((Graphics2D) g, 0, Engine.TILE_SIZE, Engine.TILE_SIZE, Engine.TILE_SIZE);
     }
-}
+}*/

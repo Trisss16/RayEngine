@@ -16,6 +16,9 @@ public class RayCaster {
     private int raysToCast;
     private Ray[] rays;
     
+    Sprite spr = new Sprite("/res/greystone.png");
+    
+    
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
     private Dimension aspectRatio;
     
@@ -120,13 +123,24 @@ public class RayCaster {
             
             //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
             int rayHeight = (int) Math.round(Engine.TILE_SIZE / rayLength * simHeight);
-            rayHeight = Math.min(rayHeight, simHeight);
+            //rayHeight = Math.min(rayHeight, simHeight); //esta linea causa que las texturas se deformen entre más te acercas
             
             //para mantener la columna centrada
             int offset = (simHeight - rayHeight) / 2;
             
-            g.setColor(Color.red);
-            g.fillRect(i, offset, 1, rayHeight);
+            g.setColor(Color.MAGENTA);
+            
+            int column;
+            
+            if (rays[i].isVertical) {
+                column = (int) (rays[i].hit.y % Engine.TILE_SIZE);
+            } else {
+                column = (int) (rays[i].hit.x % Engine.TILE_SIZE);
+            }
+            
+            g.setColor(Color.MAGENTA);
+            //g.fillRect(i, offset, 1, rayHeight);
+            spr.drawColumn(g, column, i, offset, 1, rayHeight);
             
             //dibujar una sombra
             if (rays[i].isHorizontal) {
