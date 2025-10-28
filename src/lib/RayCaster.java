@@ -16,7 +16,6 @@ public class RayCaster {
     private int raysToCast;
     private Ray[] rays;
     
-    Sprite spr = new Sprite("/res/greystone.png");
     
     
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
@@ -111,6 +110,7 @@ public class RayCaster {
         
         for (int i = 0; i < raysToCast; i++) {
             
+            if (rays[i].hit == null) continue;
             double rayLength = rays[i].length;
             
             /*Se da un efecto de ojo de pez porque las columnas se hacen más pequeñas entra más largo sea el rayo y
@@ -132,15 +132,16 @@ public class RayCaster {
             
             int column;
             
+            //que columna de pixeles del sprite se va a dibujar
             if (rays[i].isVertical) {
                 column = (int) (rays[i].hit.y % Engine.TILE_SIZE);
             } else {
                 column = (int) (rays[i].hit.x % Engine.TILE_SIZE);
             }
             
-            g.setColor(Color.MAGENTA);
-            //g.fillRect(i, offset, 1, rayHeight);
-            spr.drawColumn(g, column, i, offset, 1, rayHeight);
+            //obtiene el sprite de la pared que el rayo golpeó para dibujarlo
+            Sprite wallSpr = map.getBehaviorSprite(rays[i].tileValue);
+            wallSpr.drawColumn(g, column, i, offset, 1, rayHeight);
             
             //dibujar una sombra
             if (rays[i].isHorizontal) {
@@ -185,6 +186,8 @@ final class Ray {
     
     public final DPoint hit;
     
+    public final int tileValue;
+    
     
     //recibe el angulo en radianes
     public Ray(double angle, DPoint pos, Map map) {
@@ -199,6 +202,9 @@ final class Ray {
         isVertical = foundVerticalIntersection;
         isHorizontal = foundHorizontalIntersection;
         hit = intersection;
+        
+        
+        tileValue = hit != null ? map.getWallValue(hit.x, hit.y) : 0;
     }
     
     //aplica la formula de la distancia entre dos puntos (que también podria considerarse la de la magnitud de un vector, pues un rayo es un vector)

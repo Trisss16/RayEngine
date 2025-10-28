@@ -1,5 +1,6 @@
 package rayengine;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -12,7 +13,7 @@ public class RayEngine {
     public static int[][] map = {
         {1,1,1,1,1,1},
         {1,0,0,0,0,1},
-        {1,0,0,1,0,1,},
+        {1,3,2,1,0,1},
         {1,0,0,0,0,1},
         {1,0,0,0,0,1},
         {1,1,1,1,1,1},
@@ -22,7 +23,7 @@ public class RayEngine {
         //leer mapa
         
         Map m = new Map("/res/map.txt");
-        Map m2 = new Map(map);
+        //Map m = new Map(map);
         
         //crear player
         Player p = new Player(100, 100, 100);
@@ -33,7 +34,13 @@ public class RayEngine {
         //e.setTargetFPS(60);
         e.setRaysToCast(800); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
+        
+        m.addTileBehavior(1, new Sprite("/res/greystone.png"));
+        m.addTileBehavior(2, new Sprite(Color.blue));
+        m.addTileBehavior(3, new Sprite(Color.pink));
+        
         e.start();
+        
     }
     
 }

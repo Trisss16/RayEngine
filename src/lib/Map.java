@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class Map {
@@ -13,19 +14,17 @@ public class Map {
     public final int m;
     public final int n;
     
+    private final HashMap<Integer, Sprite> behaviors;
     
     public Map(String path) {
         map = openMapFile(path);
         m = map.length;
         n = map[0].length;
         
-        System.out.println("imprimiendo mapa");
-        for (int[] i: map) {
-            for (int j: i) {
-                System.out.printf("%d ", j);
-            }
-            System.out.println();
-        }
+        behaviors = new HashMap<>();
+        this.addTileBehavior(1, new Sprite(Color.white));
+        
+        printMap();
     }
     
     public Map(int[][] grid) {
@@ -41,6 +40,19 @@ public class Map {
         map = grid;
         m = map.length;
         n = map[0].length;
+        this.behaviors = new HashMap<>();
+        this.addTileBehavior(1, new Sprite(Color.white));
+        
+        printMap();
+    }
+    
+    private void printMap() {System.out.println("imprimiendo mapa");
+        for (int[] i: map) {
+            for (int j: i) {
+                System.out.printf("%d ", j);
+            }
+            System.out.println();
+        }
     }
     
     protected final int[][] openMapFile(String path) {
@@ -120,7 +132,33 @@ public class Map {
         return result;
     }
     
-    //dibuja el mapa
+    
+    //le indica al mapa como comportarse cuando una pared
+    public final void addTileBehavior(int tileValue, String sprPath) {
+        if (tileValue == 0) return; //no se le puede agregar comportamiento a las casillas en 0
+        behaviors.put(tileValue, new Sprite(sprPath));
+    }
+    
+    public final void addTileBehavior(int tileValue, Sprite spr) {
+        if (tileValue == 0) return; //no se le puede agregar comportamiento a las casillas en 0
+        behaviors.put(tileValue, spr);
+    }
+    
+    //regersa una referencia al sprite del tipo de casilla indicada, si no tiene regresa null
+    public final Sprite getBehaviorSprite(int key) {
+        if (behaviors.containsKey(key)) {
+            return behaviors.get(key);
+        }
+        return null;
+    }
+    
+    public boolean isBehaviorDefined(int key) {
+        return behaviors.containsKey(key);
+    }
+    
+    
+    //METODOS DE DIBUJO
+    
     public void renderMap(Graphics2D g) {
     int[][] data = map; // matriz del mapa
 
@@ -129,10 +167,10 @@ public class Map {
                 int value = data[i][j];
                 
                 //blanco para paredes, negro para espacio vacio
-                if (value == 0) {
-                    g.setColor(Color.black);
-                } else {
+                if (this.isWall(i, j)) {
                     g.setColor(Color.white);
+                } else {
+                    g.setColor(Color.black);
                 }
 
                 //dibuja el cuadrado de la casilla un poco más pequeño y centrado para que el color de fondo de la apariencia de un contorno
@@ -166,8 +204,18 @@ public class Map {
     public boolean insideOfWall(double x, double y) {
         Position p = getTile(x, y);
         if (p.m >= 0 && p.n >= 0 && p.m < m && p.n < n) {
-            return map[p.m][p.n] == 1;
+            return isBehaviorDefined(map[p.m][p.n]);
+            //return map[p.m][p.n] == 1;
         }
         return false;
+    }
+    
+    public boolean isWall(int m, int n) {
+        return behaviors.containsKey(map[m][n]);
+    }
+    
+    public int getWallValue(double x, double y) {
+        Position p = getTile(x, y);
+        return map[p.m][p.n];
     }
 }

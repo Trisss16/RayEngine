@@ -16,6 +16,22 @@ public class Sprite {
         getColumns();
     }
     
+    //crea un sprite con un color solido
+    public Sprite(Color clr) {
+        sprite = getColorImg(clr);
+        columns = new BufferedImage[Engine.TILE_SIZE];
+        getColumns();
+    }
+    
+    public final BufferedImage getColorImg(Color clr) {
+        BufferedImage img = new BufferedImage(Engine.TILE_SIZE, Engine.TILE_SIZE, BufferedImage.TRANSLUCENT);
+        Graphics2D g = img.createGraphics();
+        g.setColor(clr);
+        g.fillRect(0, 0, Engine.TILE_SIZE, Engine.TILE_SIZE);
+        g.dispose();
+        return img;
+    }
+    
     public static BufferedImage reescale(BufferedImage src, int w, int h) {
         BufferedImage scaled = new BufferedImage(w, h, BufferedImage.TRANSLUCENT);
         Graphics2D g = scaled.createGraphics();
@@ -49,8 +65,8 @@ public class Sprite {
             InputStream is = getClass().getResourceAsStream(path);
             
             if (is == null) {
-                //System.out.println("input stream es null.");
-                return getEmptyImage();
+                //cuando no se procesa correctamente una textura crea un cuadrado magenta
+                return getColorImg(Color.magenta);
             }
             
             im = ImageIO.read(is);
@@ -59,20 +75,11 @@ public class Sprite {
             
         } catch (IOException e) {
             
-            im = getEmptyImage();
+            im = getColorImg(Color.magenta);
             //System.out.println("No se pudo leer la imagen: " + e);
             
         }
         
-        return im;
-    }
-    
-    private BufferedImage getEmptyImage() {
-        BufferedImage im = new BufferedImage(64, 64, BufferedImage.TRANSLUCENT);
-        Graphics2D g = im.createGraphics();
-        g.setColor(Color.MAGENTA); //dibuja los muros 
-        g.fillRect(0, 0, Engine.TILE_SIZE, Engine.TILE_SIZE);
-        g.dispose();
         return im;
     }
     
