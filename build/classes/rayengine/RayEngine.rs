@@ -1,3 +1,0 @@
-rayengine.RayEngine
-rayengine.CustomPanel
-rayengine.CustomDialog

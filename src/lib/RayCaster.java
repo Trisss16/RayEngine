@@ -2,6 +2,7 @@ package lib;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 
 public class RayCaster {
     
@@ -16,6 +17,7 @@ public class RayCaster {
     private int raysToCast;
     private Ray[] rays;
     
+    private BufferedImage shadow;
     
     
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
@@ -31,8 +33,18 @@ public class RayCaster {
         //relacion de aspecto de 4:3, que es la que se solia usar en juegos retro
         aspectRatio = new Dimension(4, 3);
         
+        createShadowImg();
+        
         updatePlayerInfo();
         rays = new Ray[raysToCast];
+    }
+    
+    private void createShadowImg() {
+        shadow = new BufferedImage(1, Engine.TILE_SIZE, BufferedImage.TRANSLUCENT);
+        Graphics2D g = shadow.createGraphics();
+        g.setColor(new Color(0, 0, 0, 128));
+        g.fillRect(0, 0, 1, Engine.TILE_SIZE);
+        g.dispose();
     }
     
     //EN GRADOS
@@ -53,7 +65,7 @@ public class RayCaster {
     }
     
     public void setRaysToCast(int raysToCast) {
-        if (raysToCast % 2 == 1) raysToCast++; //igual con los rayos
+        //if (raysToCast % 2 == 1) raysToCast++; //igual con los rayos
         this.raysToCast = raysToCast;
         rays = new Ray[raysToCast];
     }
@@ -96,7 +108,7 @@ public class RayCaster {
         int simWidth = raysToCast;
         int simHeight = (simWidth * aspectRatio.height) / aspectRatio.width;
         
-        Color shadow = new Color(0, 0, 0, 128); //dibujar sombras
+        //Color shadow = new Color(0, 0, 0, 128); //dibujar sombras
         
         //escalas para acomodar al tamaño de la ventana
         double widthScale = 1.0 * Engine.WIN_WIDTH / simWidth;
@@ -125,6 +137,8 @@ public class RayCaster {
             int rayHeight = (int) Math.round(Engine.TILE_SIZE / rayLength * simHeight);
             //rayHeight = Math.min(rayHeight, simHeight); //esta linea causa que las texturas se deformen entre más te acercas
             
+            if (rayHeight % 2 == 1) rayHeight++; //mantiene los numeros pares
+            
             //para mantener la columna centrada
             int offset = (simHeight - rayHeight) / 2;
             
@@ -139,14 +153,23 @@ public class RayCaster {
                 column = (int) (rays[i].hit.x % Engine.TILE_SIZE);
             }
             
+            
+            /*para evitar que las texturas se dibujen invertidas checa si el rayo está mirando a la izquierda en intersecciones
+            verticales o hacia abajo en intersecciones horizontales (cosa que indica inverted) y si el rayo si está invertido lo
+            corrige tomando las texturas de derecha a izquierda y no de izquierda a derecha como lo haria column normalmente*/
+            if (rays[i].inverted) {
+                column = Engine.TILE_SIZE - column - 1;
+            }
+            
+            
             //obtiene el sprite de la pared que el rayo golpeó para dibujarlo
             Sprite wallSpr = map.getBehaviorSprite(rays[i].tileValue);
             wallSpr.drawColumn(g, column, i, offset, 1, rayHeight);
             
             //dibujar una sombra
             if (rays[i].isHorizontal) {
-                g.setColor(shadow);
-                g.fillRect(i, offset, 1, rayHeight);
+                //lo dibuja con una imagen porque a veces con fillRect no cubria la columna completa
+                g.drawImage(this.shadow, i, offset, 1, rayHeight, null);
             }
         }
         
@@ -176,10 +199,11 @@ final class Ray {
     //true si hay intersección antes de salir del mapa en cualquiera de los dos casos
     private boolean foundHorizontalIntersection = false;
     private boolean foundVerticalIntersection = false;
-    
+
     private DPoint intersection;
     
-    //datos del rayo
+    //DATOS DEL RAYO
+    
     public final double length;
     public final boolean isVertical;
     public final boolean isHorizontal;
@@ -187,6 +211,8 @@ final class Ray {
     public final DPoint hit;
     
     public final int tileValue;
+    
+    public final boolean inverted;
     
     
     //recibe el angulo en radianes
@@ -203,6 +229,11 @@ final class Ray {
         isHorizontal = foundHorizontalIntersection;
         hit = intersection;
         
+        /*si el angulo mira hacia abajo o hacia la izquierda las texturas se van a dibujar invertidas
+        por lo que es necesario saber si un angulo va a dibujar sus texturas asi para invertirlo*/
+        boolean lookingDown = isHorizontal && (angle > 0 && angle < Math.PI);
+        boolean lookingLeft = isVertical && (angle > Math.PI / 2 && angle < 3 * Math.PI / 2);
+        inverted = lookingDown || lookingLeft;
         
         tileValue = hit != null ? map.getWallValue(hit.x, hit.y) : 0;
     }

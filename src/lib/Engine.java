@@ -46,6 +46,12 @@ public class Engine extends JFrame{
     
     private boolean fullscreen;
     
+    //para medir los fps
+    private int frameAvg;
+    private int frameCounter;
+    private double dtSum;
+    private double FPS;
+    
     
     private static void setWinWidthAndHeight(Dimension d) {
         WIN_WIDTH = d.width;
@@ -97,6 +103,11 @@ public class Engine extends JFrame{
         currentHeight = WIN_HEIGHT;
         fullscreen = false;
         
+        frameAvg = 30;
+        frameCounter = 0;
+        dtSum = 0;
+        FPS = 0;
+        
         device = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
         
         defaultCursor = Cursor.getDefaultCursor();
@@ -117,6 +128,7 @@ public class Engine extends JFrame{
         paused = !paused;
         System.out.println("Pausado: " + paused);
         
+        //muestra el cursor oculto o normal segun a que estado cambió
         this.setCursor(paused ? defaultCursor : hiddenCursor);
     }
     
@@ -233,6 +245,8 @@ public class Engine extends JFrame{
             /*llama todo esto fuera de update para que incluso con el juego pausado se pueda resumir,
             activar y desactivar la pantalla de debug o entrar y salir de pantalla completa*/
             
+            updateFPS(deltaTime); //actualizar los fps
+            
             
             
             //update
@@ -281,6 +295,18 @@ public class Engine extends JFrame{
         return (finish - start) / 1_000_000_000.0;
     }
     
+    
+    private void updateFPS(double dt) {
+        dtSum += dt;
+        frameCounter++;
+        
+        if (frameCounter >= frameAvg) {
+            double dtAvg = dtSum / (frameAvg * 1.0);
+            FPS = 1.0 / dtAvg;
+            dtSum = 0;
+            frameCounter = 0;
+        }
+    }
     
     
     
@@ -338,6 +364,7 @@ public class Engine extends JFrame{
             
             //información
             drawTextBox(g, String.format("dt: %.6f", deltaTime), 10, 10);
+            drawTextBox(g, String.format("FPS: %.2f", FPS), 100, 10);
             if (paused) drawTextBox(g, "PAUSADO", view2d.getWidth() / 2, 10);
         
 

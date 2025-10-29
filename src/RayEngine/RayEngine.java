@@ -2,10 +2,6 @@ package rayengine;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
 import lib.*;
 
 public class RayEngine {
@@ -18,12 +14,44 @@ public class RayEngine {
         {1,0,0,0,0,1},
         {1,1,1,1,1,1},
     };
+    
+    public static int[][] map2 = {
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,1},
+        {1,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,1},
+        {1,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,1},
+        {1,0,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+    };
+    
 
     public static void main(String[] args) {
-        //leer mapa
-        
         Map m = new Map("/res/map.txt");
-        //Map m = new Map(map);
+        //Map m = new Map(map2);
         
         //crear player
         Player p = new Player(100, 100, 100);
@@ -32,41 +60,15 @@ public class RayEngine {
         Engine e = new Engine(p, m);
         e.setWindowSize(new Dimension(800, 600));
         //e.setTargetFPS(60);
-        e.setRaysToCast(800); //indica cuantos rayos se lanzan
+        e.setRaysToCast(1200); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
         
         m.addTileBehavior(1, new Sprite("/res/greystone.png"));
-        m.addTileBehavior(2, new Sprite(Color.blue));
+        m.addTileBehavior(2, new Sprite("/res/arrow.png"));
         m.addTileBehavior(3, new Sprite(Color.pink));
+        m.addTileBehavior(4, new Sprite(Color.red));
         
         e.start();
-        
     }
     
 }
-
-
-//prueba de funcionamiento de la clase Sprite
-/*class CustomPanel extends JPanel {
-    
-    private final Sprite spr;
-    
-    public CustomPanel() {
-        spr = new Sprite("/res/greystone.png");
-        this.setPreferredSize(new Dimension(64, 150));
-    }
-    
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        
-        int ctr = 0;
-        
-        while(ctr < Engine.TILE_SIZE * 2) {
-            spr.drawColumn((Graphics2D) g, ctr, ctr, 0, 1, Engine.TILE_SIZE);
-            ctr++;
-        }
-        
-        spr.drawSprite((Graphics2D) g, 0, Engine.TILE_SIZE, Engine.TILE_SIZE, Engine.TILE_SIZE);
-    }
-}*/
