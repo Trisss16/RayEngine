@@ -192,6 +192,39 @@ public class Map {
         }
     }
     
+    public void renderMap2(Graphics2D g) {
+    int[][] data = map; // matriz del mapa
+
+        for (int i = 0; i < this.m; i++) {
+            for (int j = 0; j < this.n; j++) {
+                int value = data[i][j];
+                
+                //casillas vacias
+                if (!this.isWall(i, j)) {
+                    g.setColor(Color.black);
+                    g.fillRect(
+                        j * Engine.TILE_SIZE + 2, //x
+                        i * Engine.TILE_SIZE + 2, //y
+                        Engine.TILE_SIZE - 2,
+                        Engine.TILE_SIZE -2
+                    );
+                    
+                    continue;
+                }
+
+                Sprite spr = behaviors.get(value);
+                
+                //dibuja textura de la pared
+                spr.drawSprite(g,
+                        j * Engine.TILE_SIZE + 2,
+                        i * Engine.TILE_SIZE + 2,
+                        Engine.TILE_SIZE - 2,
+                        Engine.TILE_SIZE -2
+                );
+            }
+        }
+    }
+    
     //regesa un objeto position indicando la casilla del mapa dentro de la que las coordenadas recibidas se encuentran
     public static Position getTile(double x, double y) {
         int tileX = (int) Math.floor(x / Engine.TILE_SIZE);

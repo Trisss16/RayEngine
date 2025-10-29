@@ -51,6 +51,7 @@ public class RayEngine {
 
     public static void main(String[] args) {
         Map m = new Map("/res/map.txt");
+        //Map m = new Map(map);
         //Map m = new Map(map2);
         
         //crear player
@@ -60,12 +61,14 @@ public class RayEngine {
         Engine e = new Engine(p, m);
         e.setWindowSize(new Dimension(800, 600));
         //e.setTargetFPS(60);
-        e.setRaysToCast(1200); //indica cuantos rayos se lanzan
+        //e.setBackground(new Background("/res/background.png"));
+        e.setBackground(new Background(Color.DARK_GRAY, Color.GRAY));
+        e.setRaysToCast(800); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
         
         m.addTileBehavior(1, new Sprite("/res/greystone.png"));
         m.addTileBehavior(2, new Sprite("/res/arrow.png"));
-        m.addTileBehavior(3, new Sprite(Color.pink));
+        m.addTileBehavior(3, new Sprite(Color.magenta));
         m.addTileBehavior(4, new Sprite(Color.red));
         
         e.start();

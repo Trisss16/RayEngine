@@ -126,7 +126,7 @@ public class Engine extends JFrame{
     //pausar o resumir el juego
     public void togglePause() {
         paused = !paused;
-        System.out.println("Pausado: " + paused);
+        //System.out.println("Pausado: " + paused);
         
         //muestra el cursor oculto o normal segun a que estado cambió
         this.setCursor(paused ? defaultCursor : hiddenCursor);
@@ -157,6 +157,14 @@ public class Engine extends JFrame{
     
     public void setTargetFPS(int fps) {
         targetFPS = fps;
+    }
+    
+    public void setFrameAvg(int frameAvg) {
+        this.frameAvg = frameAvg;
+    }
+    
+    public void setBackground(Background bg) {
+        raycaster.setBackground(bg);
     }
 
     //modifica las dimensiones del frame principal, además sale de pantalla completa en caso de que esté activada
@@ -198,6 +206,7 @@ public class Engine extends JFrame{
         if (active && fullscreen) return; //no lo activa si está en pantalla completa
         debugActive = active;
         debugScreen.setVisible(active);
+        if (active) this.toFront();
         c.requestFocus(); //vuelve a focusear el frame porque el focus se va a la vista 2d
     }
     
@@ -358,7 +367,7 @@ public class Engine extends JFrame{
             g.setColor(Color.GRAY);
             g.fillRect(0, 0, view2d.getWidth(), view2d.getHeight());
             
-            map.renderMap(g);
+            map.renderMap2(g);
             raycaster.renderView2D(g);
             p.drawPlayer(g);
             

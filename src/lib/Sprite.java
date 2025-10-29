@@ -23,7 +23,7 @@ public class Sprite {
         getColumns();
     }
     
-    public final BufferedImage getColorImg(Color clr) {
+    public static final BufferedImage getColorImg(Color clr) {
         BufferedImage img = new BufferedImage(Engine.TILE_SIZE, Engine.TILE_SIZE, BufferedImage.TRANSLUCENT);
         Graphics2D g = img.createGraphics();
         g.setColor(clr);

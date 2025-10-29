@@ -18,6 +18,7 @@ public class RayCaster {
     private Ray[] rays;
     
     private BufferedImage shadow;
+    private Background bg;
     
     
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
@@ -33,6 +34,10 @@ public class RayCaster {
         //relacion de aspecto de 4:3, que es la que se solia usar en juegos retro
         aspectRatio = new Dimension(4, 3);
         
+        //fondo negro
+        bg = new Background(Color.black, Color.black);
+        
+        //Crea la imagen que se usa para dar sombra a las paredes
         createShadowImg();
         
         updatePlayerInfo();
@@ -80,6 +85,10 @@ public class RayCaster {
         angle = p.getRadAngle();
     }
     
+    public void setBackground(Background bg) {
+        this.bg = bg;
+    }
+    
     
     public void update(double dt) {
         updatePlayerInfo();
@@ -117,8 +126,9 @@ public class RayCaster {
         g.scale(widthScale, heightScale);
         
         //fondo
-        g.setColor(Color.black);
-        g.fillRect(0, 0, simWidth, simHeight);
+        //g.setColor(Color.black);
+        //g.fillRect(0, 0, simWidth, simHeight);
+        bg.draw(g, 0, 0, simWidth, simHeight);
         
         for (int i = 0; i < raysToCast; i++) {
             
