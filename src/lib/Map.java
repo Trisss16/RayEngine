@@ -192,7 +192,7 @@ public class Map {
         }
     }
     
-    public void renderMap2(Graphics2D g) {
+    public void renderMap2(Graphics2D g, Color floorColor) {
     int[][] data = map; // matriz del mapa
 
         for (int i = 0; i < this.m; i++) {
@@ -201,7 +201,7 @@ public class Map {
                 
                 //casillas vacias
                 if (!this.isWall(i, j)) {
-                    g.setColor(Color.black);
+                    g.setColor(floorColor);
                     g.fillRect(
                         j * Engine.TILE_SIZE + 2, //x
                         i * Engine.TILE_SIZE + 2, //y

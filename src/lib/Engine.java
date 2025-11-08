@@ -16,7 +16,6 @@ public class Engine extends JFrame{
     private final Map map;
     private final Canvas c;
     public final Input in;
-    
     private final RayCaster raycaster;
     
     //para ver loq ue sucede en la vista 2d
@@ -51,6 +50,9 @@ public class Engine extends JFrame{
     private int frameCounter;
     private double dtSum;
     private double FPS;
+    
+    //referencia al fondo que usa el raycaster
+    private Background bg;
     
     
     private static void setWinWidthAndHeight(Dimension d) {
@@ -91,7 +93,8 @@ public class Engine extends JFrame{
         this.map = map;
         
         //raycaster
-        this.raycaster = new RayCaster(p, map);
+        bg = new Background(Color.black, Color.black);
+        this.raycaster = new RayCaster(p, map, bg);
         
         //parámetros
         deltaTime = 0;
@@ -164,6 +167,7 @@ public class Engine extends JFrame{
     }
     
     public void setBackground(Background bg) {
+        this.bg = bg; //guarda siempre una referencia al fondo
         raycaster.setBackground(bg);
     }
 
@@ -364,12 +368,13 @@ public class Engine extends JFrame{
         g.clearRect(0, 0, view2d.getWidth(), view2d.getHeight());
         
         //RENDERIZADO
-            g.setColor(Color.GRAY);
+            g.setColor(Color.black); //para las lineas
             g.fillRect(0, 0, view2d.getWidth(), view2d.getHeight());
             
-            map.renderMap2(g);
-            raycaster.renderView2D(g);
-            p.drawPlayer(g);
+            //dibuja las casillas vacias con el color del suelo del fondo
+            map.renderMap2(g, bg.floor);
+            raycaster.renderView2D(g); //rayos del raycaster
+            p.drawPlayer(g); //jugador
             
             //información
             drawTextBox(g, String.format("dt: %.6f", deltaTime), 10, 10);

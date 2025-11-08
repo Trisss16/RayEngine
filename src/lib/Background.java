@@ -11,12 +11,30 @@ public class Background {
     
     private final BufferedImage bg;
     
-    public Background(String path) {
-        bg = getBgImg(path);
-    }
+    //colores del fondo
+    public final Color ceiling;
+    public final Color floor;
     
     public Background(Color ceiling, Color floor) {
         bg = getSolidColorImg(ceiling, floor);
+        this.ceiling = ceiling;
+        this.floor = floor;
+    }
+    
+    public Background(String path) {
+        bg = getBgImg(path);
+  
+        /*si se usa una imagen y no un color solido se obtienen colores de
+        esa imagen para guardar como el techo y el suelo, para la vista 2D*/
+        
+        //calcula el pixel central del techo y del suelo para sacar los colores de ahi
+        int ceilingX = bg.getWidth() / 2;
+        int ceilingY = bg.getHeight() / 4;
+        int floorX = ceilingX;
+        int floorY = ceilingY * 3;
+        
+        ceiling = new Color(bg.getRGB(ceilingX, ceilingY));
+        floor = new Color(bg.getRGB(floorX, floorY));
     }
     
     private BufferedImage getBgImg(String path) {

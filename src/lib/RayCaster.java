@@ -17,14 +17,13 @@ public class RayCaster {
     private int raysToCast;
     private Ray[] rays;
     
-    private BufferedImage shadow;
     private Background bg;
     
     
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
     private Dimension aspectRatio;
     
-    public RayCaster(Player p, Map map) {
+    public RayCaster(Player p, Map map, Background bg) {
         this.p = p;
         this.map = map;
         
@@ -33,24 +32,13 @@ public class RayCaster {
         
         //relacion de aspecto de 4:3, que es la que se solia usar en juegos retro
         aspectRatio = new Dimension(4, 3);
-        
-        //fondo negro
-        bg = new Background(Color.black, Color.black);
-        
-        //Crea la imagen que se usa para dar sombra a las paredes
-        createShadowImg();
+
+        this.bg = bg;
         
         updatePlayerInfo();
         rays = new Ray[raysToCast];
     }
     
-    private void createShadowImg() {
-        shadow = new BufferedImage(1, Engine.TILE_SIZE, BufferedImage.TRANSLUCENT);
-        Graphics2D g = shadow.createGraphics();
-        g.setColor(new Color(0, 0, 0, 128));
-        g.fillRect(0, 0, 1, Engine.TILE_SIZE);
-        g.dispose();
-    }
     
     //EN GRADOS
     public void setFOV(int FOV) {
@@ -145,7 +133,6 @@ public class RayCaster {
             
             //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
             int rayHeight = (int) Math.round(Engine.TILE_SIZE / rayLength * simHeight);
-            //rayHeight = Math.min(rayHeight, simHeight); //esta linea causa que las texturas se deformen entre más te acercas
             
             if (rayHeight % 2 == 1) rayHeight++; //mantiene los numeros pares
             
@@ -176,10 +163,11 @@ public class RayCaster {
             Sprite wallSpr = map.getBehaviorSprite(rays[i].tileValue);
             wallSpr.drawColumn(g, column, i, offset, 1, rayHeight);
             
-            //dibujar una sombra
-            if (rays[i].isHorizontal) {
-                //lo dibuja con una imagen porque a veces con fillRect no cubria la columna completa
-                g.drawImage(this.shadow, i, offset, 1, rayHeight, null);
+            //si la intersección es vertical dibuja la pared normal, si es horizontal la dibuja sombreada
+            if (rays[i].isVertical) {
+                wallSpr.drawColumn(g, column, i, offset, 1, rayHeight);
+            } else {
+                wallSpr.drawShadedColumn(g, column, i, offset, 1, rayHeight);
             }
         }
         

@@ -68,7 +68,8 @@ public class RayEngine {
         
         m.addTileBehavior(1, new Sprite("/res/greystone.png"));
         m.addTileBehavior(2, new Sprite("/res/arrow.png"));
-        m.addTileBehavior(3, new Sprite(Color.magenta));
+        //m.addTileBehavior(3, new Sprite(Color.magenta));
+        m.addTileBehavior(3, new Sprite("/res/pillar.png"));
         m.addTileBehavior(4, new Sprite(Color.red));
         
         e.start();
