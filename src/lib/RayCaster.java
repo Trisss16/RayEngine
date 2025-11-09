@@ -16,6 +16,7 @@ public class RayCaster {
     
     private int raysToCast;
     private Ray[] rays;
+    private double ratio; //división del aspect ratio
     
     private Background bg;
     
@@ -30,8 +31,8 @@ public class RayCaster {
         this.FOV = 60; //inicializa en 60 (el fov comun en la mayoria de juegos)
         this.raysToCast = 200;
         
-        //relacion de aspecto de 4:3, que es la que se solia usar en juegos retro
-        aspectRatio = new Dimension(4, 3);
+        //establece la relación de aspecto
+        setAspectRatio(16, 9);
 
         this.bg = bg;
         
@@ -63,8 +64,9 @@ public class RayCaster {
         rays = new Ray[raysToCast];
     }
     
-    public void setAspectRatio(int w, int h) {
+    public final void setAspectRatio(int w, int h) {
         aspectRatio = new Dimension(w, h);
+        ratio = aspectRatio.width / (1.0 * aspectRatio.height);
     }
     
     
@@ -131,25 +133,21 @@ public class RayCaster {
             da = Engine.normalizeAngleRad(da);
             rayLength *= Math.cos(da);
             
-            //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
-            int rayHeight = (int) Math.round(Engine.TILE_SIZE / rayLength * simHeight);
+            //obtiene el alto de la columna que dibujará el rayo actual
+            int rayHeight = getRayHeight(rayLength, simHeight);
             
-            if (rayHeight % 2 == 1) rayHeight++; //mantiene los numeros pares
-            
-            //para mantener la columna centrada
+            //calcula la posición en y que se debe de dibuja la columna para mantenerla centrada
             int offset = (simHeight - rayHeight) / 2;
             
-            g.setColor(Color.MAGENTA);
-            
-            int column;
+            //g.setColor(Color.MAGENTA);
             
             //que columna de pixeles del sprite se va a dibujar
+            int column;
             if (rays[i].isVertical) {
                 column = (int) (rays[i].hit.y % Engine.TILE_SIZE);
             } else {
                 column = (int) (rays[i].hit.x % Engine.TILE_SIZE);
             }
-            
             
             /*para evitar que las texturas se dibujen invertidas checa si el rayo está mirando a la izquierda en intersecciones
             verticales o hacia abajo en intersecciones horizontales (cosa que indica inverted) y si el rayo si está invertido lo
@@ -158,10 +156,8 @@ public class RayCaster {
                 column = Engine.TILE_SIZE - column - 1;
             }
             
-            
             //obtiene el sprite de la pared que el rayo golpeó para dibujarlo
             Sprite wallSpr = map.getBehaviorSprite(rays[i].tileValue);
-            wallSpr.drawColumn(g, column, i, offset, 1, rayHeight);
             
             //si la intersección es vertical dibuja la pared normal, si es horizontal la dibuja sombreada
             if (rays[i].isVertical) {
@@ -171,7 +167,23 @@ public class RayCaster {
             }
         }
         
-        g.setTransform(old);
+        g.setTransform(old); //regresa a la escala original
+    }
+    
+    private int getRayHeight(double rayLength, int simHeight) {
+        //calcula el alto de cada columna columna de un rayo, obteniendo la inversa de su longitud y multiplicandola por el alto de la simulacion
+        double rayHeightDouble = (Engine.TILE_SIZE / rayLength * simHeight);
+        
+        /*la verdad es que no se muy bien por qué, pero las paredes se dibujan deformadas según el aspect ratio de
+        la pantalla. Con un aspect ratio de 1:1 las paredes se ven correctamente, pero con uno de 4:3 o 16:9 las
+        paredes tendrán un ancho y alto que corresponde a ese aspect ratio. Al final logré corregirlo obteniendo ratio,
+        que es la división entre el ancho y alto del aspect ratio, y luego multiplicando el alto de la columna que se
+        va a dibujar con ratio. Funciona, aunque no se si sea la forma correcta de hacerlo*/
+        rayHeightDouble *= ratio; 
+        
+        int rayHeight = (int) Math.round(rayHeightDouble);
+        if (rayHeight % 2 == 1) rayHeight++; //mantiene los numeros pares
+        return rayHeight;
     }
     
     

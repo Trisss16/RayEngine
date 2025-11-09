@@ -33,7 +33,7 @@ public final class Player {
         this.v = v;
         this.x = x;
         this.y = y;
-        this.hitboxRadius = 10;
+        this.hitboxRadius = 15;
         
         this.sensitivity = 0.3;
         

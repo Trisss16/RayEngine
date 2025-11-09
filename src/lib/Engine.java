@@ -50,6 +50,7 @@ public class Engine extends JFrame{
     private int frameCounter;
     private double dtSum;
     private double FPS;
+    private boolean showFPSinGame;
     
     //referencia al fondo que usa el raycaster
     private Background bg;
@@ -110,6 +111,7 @@ public class Engine extends JFrame{
         frameCounter = 0;
         dtSum = 0;
         FPS = 0;
+        showFPSinGame = false;
         
         device = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
         
@@ -170,6 +172,10 @@ public class Engine extends JFrame{
         this.bg = bg; //guarda siempre una referencia al fondo
         raycaster.setBackground(bg);
     }
+    
+    public void toggleShowFPS() {
+        showFPSinGame = !showFPSinGame;
+    }
 
     //modifica las dimensiones del frame principal, además sale de pantalla completa en caso de que esté activada
     public void setWindowSize(Dimension d) {
@@ -178,6 +184,7 @@ public class Engine extends JFrame{
         currentHeight = d.height;
         Engine.setWinWidthAndHeight(d);
         c.setPreferredSize(d);
+        c.setSize(d);
         this.pack();
         this.setLocationRelativeTo(null);
         c.createBufferStrategy(2); //Recrea el buffer strategy con el nuevo tamaño
@@ -254,6 +261,9 @@ public class Engine extends JFrame{
         
             //activa o desactiva la pantalla completa
             if (in.isKeyReleased(KeyEvent.VK_F11)) toggleFullscreen();
+            
+            //FPS dentro de la vista 3D
+            if (in.isKeyReleased(KeyEvent.VK_F4)) toggleShowFPS();
             
             /*llama todo esto fuera de update para que incluso con el juego pausado se pueda resumir,
             activar y desactivar la pantalla de debug o entrar y salir de pantalla completa*/
@@ -355,6 +365,8 @@ public class Engine extends JFrame{
         
         //todo lo que se quiere renderizar
             raycaster.renderSimulation3D(g);
+            if (showFPSinGame)
+                drawTextBox(g, String.format("FPS: %.2f", FPS), 0, 0);  
         
         
         //muestra el frame dibujar
@@ -376,7 +388,7 @@ public class Engine extends JFrame{
             raycaster.renderView2D(g); //rayos del raycaster
             p.drawPlayer(g); //jugador
             
-            //información
+            //dibuja el deltatime, fps y si el juego esta pausado
             drawTextBox(g, String.format("dt: %.6f", deltaTime), 10, 10);
             drawTextBox(g, String.format("FPS: %.2f", FPS), 100, 10);
             if (paused) drawTextBox(g, "PAUSADO", view2d.getWidth() / 2, 10);

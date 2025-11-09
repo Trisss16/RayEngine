@@ -65,10 +65,11 @@ public class RayEngine {
         e.setBackground(new Background(Color.DARK_GRAY, Color.GRAY));
         e.setRaysToCast(800); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
+        e.setWindowSize(new Dimension(1280, 720));
         
         m.addTileBehavior(1, new Sprite("/res/greystone.png"));
         m.addTileBehavior(2, new Sprite("/res/arrow.png"));
-        //m.addTileBehavior(3, new Sprite(Color.magenta));
+        m.addTileBehavior(3, new Sprite(Color.magenta));
         m.addTileBehavior(3, new Sprite("/res/pillar.png"));
         m.addTileBehavior(4, new Sprite(Color.red));
         
