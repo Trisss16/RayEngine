@@ -58,7 +58,7 @@ public class Sprite {
     }
     
     public static final BufferedImage getColorImg(Color clr) {
-        BufferedImage img = new BufferedImage(Engine.TILE_SIZE, Engine.TILE_SIZE, BufferedImage.TRANSLUCENT);
+        BufferedImage img = new BufferedImage(Engine.TILE_SIZE, Engine.TILE_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         g.setColor(clr);
         g.fillRect(0, 0, Engine.TILE_SIZE, Engine.TILE_SIZE);
@@ -73,7 +73,7 @@ public class Sprite {
         //crea la imagen sombreada
         BufferedImage shaded = new BufferedImage(
                 w, h,
-                BufferedImage.TRANSLUCENT
+                BufferedImage.TYPE_INT_ARGB
         );
         
         Graphics2D g = shaded.createGraphics();
@@ -84,7 +84,7 @@ public class Sprite {
     }
     
     public static BufferedImage reescale(BufferedImage src, int w, int h) {
-        BufferedImage scaled = new BufferedImage(w, h, BufferedImage.TRANSLUCENT);
+        BufferedImage scaled = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = scaled.createGraphics();
         //g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.drawImage(src, 0, 0, w, h, null);

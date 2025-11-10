@@ -32,7 +32,7 @@ public class RayCaster {
         this.raysToCast = 200;
         
         //establece la relación de aspecto
-        setAspectRatio(16, 9);
+        setAspectRatio(4, 3);
 
         this.bg = bg;
         

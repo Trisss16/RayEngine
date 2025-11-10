@@ -226,6 +226,10 @@ public class Engine extends JFrame{
         c.requestFocus(); //vuelve a focusear el frame porque el focus se va a la vista 2d
     }
     
+    public void setAspectRatio(Dimension d) {
+        raycaster.setAspectRatio(d.width, d.height);
+    }
+    
     
     
     

@@ -55,7 +55,7 @@ public class RayEngine {
         //Map m = new Map(map2);
         
         //crear player
-        Player p = new Player(100, 100, 100);
+        Player p = new Player(120, 100, 100);
         
         //iniciar el motor
         Engine e = new Engine(p, m);
@@ -63,14 +63,15 @@ public class RayEngine {
         //e.setTargetFPS(60);
         //e.setBackground(new Background("/res/background.png"));
         e.setBackground(new Background(Color.DARK_GRAY, Color.GRAY));
-        e.setRaysToCast(800); //indica cuantos rayos se lanzan
+        e.setRaysToCast(1200); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
-        e.setWindowSize(new Dimension(1280, 720));
+        //e.setWindowSize(new Dimension(1280, 720));
         
         m.addTileBehavior(1, new Sprite("/res/greystone.png"));
         m.addTileBehavior(2, new Sprite("/res/arrow.png"));
         m.addTileBehavior(3, new Sprite(Color.magenta));
         m.addTileBehavior(3, new Sprite("/res/pillar.png"));
+        //m.addTileBehavior(3, new Sprite(new Color(0, 255, 0, 128)));
         m.addTileBehavior(4, new Sprite(Color.red));
         
         e.start();
