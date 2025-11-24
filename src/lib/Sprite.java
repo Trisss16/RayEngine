@@ -80,6 +80,7 @@ public class Sprite {
         g.drawImage(original, 0, 0, w, h, null); //copia la original
         g.setColor(shadow);
         g.fillRect(0, 0, w, h);
+        g.dispose();
         return shaded;
     }
     

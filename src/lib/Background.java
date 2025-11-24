@@ -62,8 +62,8 @@ public class Background {
     
     private BufferedImage getSolidColorImg(Color ceiling, Color floor) {
         //mantiene el ancho y alto como pares
-        int w = Engine.WIN_WIDTH % 2 == 0 ? Engine.WIN_WIDTH : Engine.WIN_WIDTH + 1;
-        int h = Engine.WIN_HEIGHT % 2 == 0 ? Engine.WIN_HEIGHT : Engine.WIN_HEIGHT + 1;
+        int w = Engine.getWinWidth() % 2 == 0 ? Engine.getWinWidth() : Engine.getWinWidth()+ 1;
+        int h = Engine.getWinHeight() % 2 == 0 ? Engine.getWinHeight() : Engine.getWinHeight() + 1;
         
         BufferedImage im = new BufferedImage(w, h, BufferedImage.TRANSLUCENT);
         

@@ -61,6 +61,7 @@ public class RayEngine {
         //iniciar el motor
         Engine e = new Engine(p, map);
         e.setWindowSize(new Dimension(800, 600));
+        e.setAspectRatio(new Dimension(16, 9));
         e.setRaysToCast(1200); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
         //e.setWindowSize(new Dimension(1280, 720));
@@ -74,24 +75,45 @@ public class RayEngine {
         map.addTileBehavior(3, new Sprite(Color.magenta));
         map.addTileBehavior(4, new Sprite(Color.red));
         map.addTileBehavior(10, new Sprite(Color.black));
-        
-        //Crear entidades
-        Random r = new Random();
+
         Sprite entitySprite = new Sprite("/res/pillar.png");
-        for (int i = 0; i < 1; i++) {
-            int x, y;
+        
+        for (int i = 0; i < 10; i++) {
+            int x;
+            int y;
             
             do {
-                x = r.nextInt(map.n * Engine.TILE_SIZE);
-                y = r.nextInt(map.m * Engine.TILE_SIZE);
+                x = (int) (Math.random() * (map.n * Engine.TILE_SIZE));
+                y = (int) (Math.random() * (map.m * Engine.TILE_SIZE));
             } while(map.insideOfWall(x, y));
             
-            //e.addEntity(new Entity(entitySprite, x, y));
+            e.addEntity(new Entity(entitySprite, x, y));
         }
         
-        e.addEntity(new Entity(entitySprite, 320, 192));
+        e.addEntity(new DemoEntity(entitySprite, 320, 192));
         
         e.start();
     }
     
+}
+
+class DemoEntity extends Entity {
+    
+    double timer;
+
+    public DemoEntity(Sprite s, double x, double y) {
+        super(s, x, y);
+        
+        timer = 0;
+    }
+    
+    @Override
+    public void update(double dt) {
+        if (timer > 3) {
+            timer = 0;
+            //e.removeEntity(this);
+        } else {
+            timer += dt;
+        }
+    }
 }

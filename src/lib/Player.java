@@ -63,7 +63,7 @@ public final class Player {
     public void addInput(Input i) {
         this.in = i;
         this.lastMouseX = in.getMouseX();
-        mouseController.mouseMove(Engine.WIN_WIDTH / 2, Engine.WIN_HEIGHT / 2); //mueve el mouse al centro
+        mouseController.mouseMove(Engine.getWinWidth() / 2, Engine.getWinHeight() / 2); //mueve el mouse al centro
     }
     
     public void addMap(Map map) {
@@ -115,7 +115,7 @@ public final class Player {
         
         updateAngle();
         updateMovement(dt); //actualiza el movimiento del personaje
-        System.out.println(Math.toDegrees(angle));
+        //System.out.println(Math.toDegrees(angle));
     }
     
     

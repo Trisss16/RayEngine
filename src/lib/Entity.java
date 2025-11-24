@@ -54,9 +54,10 @@ public class Entity {
     public void update(double dt)  {
     }
     
-    public void render(Graphics2D g) {
+    public void drawEntity(Graphics2D g) {
+        int w = 6;
+        g.fillRect((int) (x - w/2), (int) (y - w/2), w, w);
     }
-    
     
     //metodos para el renderizado dentro del raycaster
     

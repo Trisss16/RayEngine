@@ -9,8 +9,8 @@ import javax.swing.*;
 public final class Engine extends JFrame{
     
     public static final int TILE_SIZE = 64; //cada celda medirá 64x64 unidades, y sus sprites tendrán esa cantidad de pixeles
-    public static  int WIN_WIDTH = 800;
-    public static int WIN_HEIGHT = 600;
+    private static int WIN_WIDTH = 800;
+    private static int WIN_HEIGHT = 600;
     
     //COMPONENTES
     public final Input in;
@@ -19,6 +19,9 @@ public final class Engine extends JFrame{
     private final Canvas c;
     private final ArrayList<Entity> entities;
     private final RayCaster raycaster;
+    
+    //elminiar entidades
+    private final ArrayList<Entity> nextToBeRemoved;
     
     //para ver loq ue sucede en la vista 2d
     private final Canvas view2d;
@@ -63,11 +66,21 @@ public final class Engine extends JFrame{
         WIN_HEIGHT = d.height;
     }
     
+    //estos metodos solo permiten conocer la variable pero no modificarla
+    public static int getWinWidth() {
+        return WIN_WIDTH;
+    }
+    
+    public static int getWinHeight() {
+        return WIN_HEIGHT;
+    }
+    
     
     public Engine(Player player, Map map) {
         
         //canvas de renderizado
         this.c = new Canvas();
+        c.setBackground(new Color(0,0,0,0)); //para que soporte transparencia
         c.setPreferredSize(new Dimension(WIN_WIDTH, WIN_HEIGHT));
         c.setFocusable(true);
         
@@ -97,6 +110,7 @@ public final class Engine extends JFrame{
         
         //lista de entidades
         entities = new ArrayList<>();
+        nextToBeRemoved = new ArrayList<>();
         
         //raycaster
         bg = new Background(Color.black, Color.black);
@@ -144,6 +158,10 @@ public final class Engine extends JFrame{
         
         //muestra el cursor oculto o normal segun a que estado cambió
         this.setCursor(paused ? defaultCursor : hiddenCursor);
+    }
+    
+    public double getDeltaTime() {
+        return deltaTime;
     }
     
     
@@ -199,12 +217,24 @@ public final class Engine extends JFrame{
         c.createBufferStrategy(2); //Recrea el buffer strategy con el nuevo tamaño
         c.requestFocus();
     }
+    
+    //SIEMPRE RECREAR EL BUFFER STRATEGY DESPUES DE USAR
+    public void undecorated(boolean u) {
+        this.dispose();
+        this.setUndecorated(u);
+        this.setVisible(true);
+    }
 
     //activa la pantalla completa
     public void setFullscreen() {
         fullscreen = true;
         setDebugScreenActive(false);
+        
+        //activa undecorated
+        undecorated(true);
+        
         device.setFullScreenWindow(this);
+        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Engine.setWinWidthAndHeight(screenSize);
         c.setPreferredSize(screenSize);
@@ -217,6 +247,8 @@ public final class Engine extends JFrame{
         if (fullscreen) {
             setFullscreen();
         } else {
+            //desactiva undecorated
+            undecorated(false);
             setWindowSize(new Dimension(currentWidth, currentHeight));
         }
         c.requestFocus();
@@ -239,6 +271,10 @@ public final class Engine extends JFrame{
         raycaster.setAspectRatio(d.width, d.height);
     }
     
+    private BufferStrategy createBuffStrat(Canvas cv) {
+        cv.createBufferStrategy(2);
+        return cv.getBufferStrategy();    
+    }
     
     
     
@@ -251,11 +287,11 @@ public final class Engine extends JFrame{
         
         /*para el renderizado utiliza un canvas en vez de hacer override de algun componente de jswing, pues usando canvas controlas exactamente cuando
         quieres que dibuje y limpie (al inicio de cada frame). Usa un bufferStrategy de 2, es decir 2 buffers. Mientras un frame se muestra, el otro frame se renderiza*/
-        c.createBufferStrategy(2);
-        BufferStrategy bs = c.getBufferStrategy();
+        createBuffStrat(c);
+        createBuffStrat(view2d);
         
-        view2d.createBufferStrategy(2);
-        BufferStrategy bs2d = view2d.getBufferStrategy();
+        BufferStrategy bs;
+        BufferStrategy bs2d;
         
         while(running) {
             long start = System.nanoTime();
@@ -289,9 +325,12 @@ public final class Engine extends JFrame{
             if (!paused) update(deltaTime);
             
             //Render
+            bs = c.getBufferStrategy();
             render(bs);
-            if (debugActive) render2D(bs2d);
-            //in.clearReleased(); //actualiza el input(para los metodos released)
+            if (debugActive) {
+                bs2d = view2d.getBufferStrategy();
+                render2D(bs2d);
+            }
             
             
             
@@ -344,9 +383,38 @@ public final class Engine extends JFrame{
         }
     }
     
+    
+    //manejo de entidades
+    
     public void addEntity(Entity en) {
         en.addRef(this, p, map);
         entities.add(en);
+    }
+    
+    public void removeEntity(Entity en) {
+        nextToBeRemoved.add(en);
+    }
+    
+    public ArrayList<Entity> getEntitiesInRadius(double radius) {
+        ArrayList<Entity> inside = new ArrayList<>();
+        
+        //empieza del ultimo porque la lista está ordenada de mayor a menor
+        for (int i = entities.size() - 1; i >= 0; i--) {
+            Entity en = entities.get(i);
+            if (en.getDistance() <= radius) inside.add(en);
+            else break;
+        }
+        
+        return inside;
+    }
+    
+    private void remove() {
+        for (Entity i: nextToBeRemoved) {
+            try {
+                entities.remove(i);
+            } catch(Exception e) {}
+        }
+        nextToBeRemoved.clear();
     }
     
     
@@ -368,6 +436,9 @@ public final class Engine extends JFrame{
         p.update(dt);
         updateEntities(dt);
         raycaster.update(dt);
+        
+        //limpia cualquier entidad que haya tenido una llamada de removeEntity
+        remove();
     }
     
     private void updateEntities(double dt) {
@@ -375,25 +446,25 @@ public final class Engine extends JFrame{
             i.update(dt);
             i.updateDistance();
         }
+        
+        /*una vez se actualizo la distancia de la entidad, la lista se ordena de mayor a menor distancia
+        Esto permite que se dibujen primero las entidades más lejanas, y las más cercanas se dibujen por
+        arriba y dar un efecto de profundidad*/
+        entities.sort((a, b) -> Double.compare(b.getDistance(), a.getDistance()));
     }
     
     
     private void render(BufferStrategy bs) {
         Graphics2D g = (Graphics2D) bs.getDrawGraphics(); //obtiene el objeto para dibujar al canvas
         
-        /*desactiva el antialiasing, que es un efecto de suavisado en las imagenes pixeleadas. Esto sirve para que
-        si se utilizan texturas de píxel art, o se renderiza con pocos rayos, la imagen no se vea borrosa*/
+        /*configuración del canvas*/
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         
-        //limpia el frame anterior
-        g.clearRect(0, 0, c.getWidth(), c.getHeight());
-        
-        
-        //todo lo que se quiere renderizar
+        //renderizado
             raycaster.renderSimulation3D(g);
-            if (showFPSinGame) drawTextBox(g, String.format("FPS: %.2f", FPS), 0, 0);  
+            if (showFPSinGame) drawTextBox(g, String.format("FPS: %.2f", FPS), 0, 0);
         
-        
+            
         //muestra el frame dibujar
         g.dispose();
         bs.show();
@@ -411,7 +482,6 @@ public final class Engine extends JFrame{
             //dibuja las casillas vacias con el color del suelo del fondo
             map.renderMap2(g, bg.floor);
             raycaster.renderView2D(g); //rayos del raycaster
-            renderEntities2D(g);
             p.drawPlayer(g); //jugador
             
             //dibuja el deltatime, fps y si el juego esta pausado
@@ -422,15 +492,6 @@ public final class Engine extends JFrame{
 
         g.dispose();
         bs.show();
-    }
-    
-    private void renderEntities2D(Graphics2D g) {
-        for (Entity i: entities) {
-            int w = 10;
-            double x = i.getX(), y = i.getY();
-            g.setColor(Color.blue);
-            g.fillRect((int) (x - w/2), (int) (y - w/2), w, w);
-        }
     }
     
     

@@ -2,6 +2,7 @@ package lib;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public final class RayCaster {
@@ -9,6 +10,11 @@ public final class RayCaster {
     private final Map map;
     private final Player p;
     private final ArrayList<Entity> entities;
+    
+    private BufferedImage sim3D;
+    private Graphics2D gSim;
+    private int simWidth;
+    private int simHeight;
     
     private DPoint playerPos;
     private double angle; //angulo del jugador en radianes
@@ -29,14 +35,15 @@ public final class RayCaster {
         this.p = p;
         this.map = map;
         this.entities = entities;
-        
+        this.bg = bg;
         this.FOV = 60;
-        this.raysToCast = 200;
         
         //establece la relación de aspecto
         setAspectRatio(4, 3);
-
-        this.bg = bg;
+        
+        /*establece la cantidad de rayos, además del ancho y alto de la
+        simulación y la imagen donde se dibujará cada frame antes del escalado*/
+        setRaysToCast(200);
         
         updatePlayerInfo();
         rays = new Ray[raysToCast];
@@ -64,6 +71,20 @@ public final class RayCaster {
         //if (raysToCast % 2 == 1) raysToCast++; //igual con los rayos
         this.raysToCast = raysToCast;
         rays = new Ray[raysToCast];
+        
+        /*cada rayo va a dibujar una sola columna de pixeles de la vista en 3D, por lo que el ancho en pixeles será el mismo
+        que el número de rayos trazados. se calcula el alto de la simulación con una regla de 3, considerando el aspect ratio*/
+        simWidth = raysToCast;
+        simHeight = (simWidth * aspectRatio.height) / aspectRatio.width;
+        
+        //vuelve a crear la imagen con el ancho y alto modificado
+        setSim3D();
+    }
+    
+    private void setSim3D() {
+        //ignora transparencia para mejorar el rendimiento
+        sim3D = new BufferedImage(simWidth, simHeight, Transparency.OPAQUE);
+        gSim = sim3D.createGraphics();
     }
     
     public final void setAspectRatio(int w, int h) {
@@ -101,18 +122,10 @@ public final class RayCaster {
     
     //METODOS PARA EL RENDERIZADO 3D
     
-    public void renderSimulation3D(Graphics2D g) {
-        /*cada rayo va a dibujar una sola columna de pixeles de la vista en 3D, por lo que el ancho en pixeles será el mismo
-        que el número de rayos trazados. Para calcular el alto de la simulación se necesita aplicar una formula considerando
-        el aspect ratio, pues se conoce tanto el ancho y alto del aspect ratio como el ancho de la simulacion*/
-        int simWidth = raysToCast;
-        int simHeight = (simWidth * aspectRatio.height) / aspectRatio.width;
-        
-        //Color shadow = new Color(0, 0, 0, 128); //dibujar sombras
-        
+    public void renderSimulation3D_2(Graphics2D g) {    
         //escalas para acomodar al tamaño de la ventana
-        double widthScale = 1.0 * Engine.WIN_WIDTH / simWidth;
-        double heightScale = 1.0 * Engine.WIN_HEIGHT / simHeight;
+        double widthScale = 1.0 * Engine.getWinWidth() / simWidth;
+        double heightScale = 1.0 * Engine.getWinHeight() / simHeight;
         AffineTransform old = g.getTransform();
         g.scale(widthScale, heightScale);
 
@@ -122,6 +135,50 @@ public final class RayCaster {
         g.setTransform(old); //regresa a la escala original
     }
     
+    public void renderSimulation3D(Graphics2D g) {    
+        //escalas para acomodar al tamaño de la ventana
+        double widthScale = 1.0 * Engine.getWinWidth() / simWidth;
+        double heightScale = 1.0 * Engine.getWinHeight() / simHeight;
+        double scale = widthScale < heightScale ? widthScale : heightScale;
+        
+        int winW = Engine.getWinWidth();
+        int winH = Engine.getWinHeight();
+
+        int drawW = (int) (simWidth * scale);
+        int drawH = (int) (simHeight * scale);
+
+        //offset para mantener el dibujo centrado
+        int xOffset = (winW - drawW) / 2;
+        int yOffset = (winH - drawH) / 2;
+        
+        //escala y centra las coordenadas
+        AffineTransform old = g.getTransform();
+        g.translate(xOffset, yOffset);
+        g.scale(scale, scale);
+        
+        //dibujar paredes y sprites
+        renderWalls(g, simWidth, simHeight);
+        renderEntities(g, simWidth, simHeight);
+        
+        g.setTransform(old); //regresa a la escala original
+        
+        
+        /*dibuja las lineas negras a los lados o arriba y abajo para cubrir las
+        partes que quedan fuera de la simulacion y del centrado*/
+        drawBlackStripes(g, xOffset, yOffset, scale);
+    }
+    
+    private void drawBlackStripes(Graphics2D g, int xo, int yo, double scale) {
+        g.setColor(Color.black);
+        
+        //a los lados
+        g.fillRect(0, 0, xo, yo);
+        g.fillRect((int) (xo + scale * simWidth), (int) (yo + scale * simHeight), xo, yo);
+        
+        //arriba y abajo
+        g.fillRect(0, 0, Engine.getWinWidth(), yo);
+        g.fillRect(0, (int) (yo + scale * simHeight), Engine.getWinWidth(), yo);
+    }
     
     //renderiza las paredes
     private void renderWalls(Graphics2D g, int simWidth, int simHeight) {
@@ -206,12 +263,8 @@ public final class RayCaster {
             rotation = Engine.normalizeAngleRad(rotation);
             DPoint transform = rotateView(dx, dy, rotation);
             
-            System.out.println("rx: " + transform.x);
-            System.out.println("ry: " + transform.y + "\n");
-            
             //si está detras del jugador no lo dibuja
-            if (transform.y < 0) continue;
-            
+            if (transform.y < 0) continue;  
             
             //calcula la posicion en x (screenX) en la simulación 3d
 
@@ -240,8 +293,7 @@ public final class RayCaster {
                 int pos = j - start;
                 int column = pos * Engine.TILE_SIZE / size;
                 i.getSprite().drawColumn(g, column, j, offset, 1, size);
-            }
-            
+            } 
         }
     }
     
@@ -257,13 +309,18 @@ public final class RayCaster {
     }
     
     
-    //RENDERIZAR LOS RAYOS EN LA VISTA 2D
+    //RENDERIZAR  VISTA 2D
     public void renderView2D(Graphics2D g) {
+        g.setColor(Color.yellow);
         for (Ray i: rays) {
             i.drawRay(g);
         }
+        
+        g.setColor(new Color(0, 255, 255));
+        for (Entity i: entities) {
+            i.drawEntity(g);
+        }
     }
-    
     
 }
 
@@ -491,8 +548,6 @@ final class Ray {
     
  
     public void drawRay(Graphics2D g) {
-        g.setColor(Color.green);
-        
         if (intersection != null) {
             g.drawLine((int) px, (int) py, (int) intersection.x, (int) intersection.y);
         }
