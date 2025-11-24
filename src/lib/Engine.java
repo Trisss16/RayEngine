@@ -3,19 +3,21 @@ package lib;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.image.*;
+import java.util.ArrayList;
 import javax.swing.*;
 
-public class Engine extends JFrame{
+public final class Engine extends JFrame{
     
     public static final int TILE_SIZE = 64; //cada celda medirá 64x64 unidades, y sus sprites tendrán esa cantidad de pixeles
     public static  int WIN_WIDTH = 800;
     public static int WIN_HEIGHT = 600;
     
     //COMPONENTES
+    public final Input in;
     private final Player p;
     private final Map map;
     private final Canvas c;
-    public final Input in;
+    private final ArrayList<Entity> entities;
     private final RayCaster raycaster;
     
     //para ver loq ue sucede en la vista 2d
@@ -69,7 +71,7 @@ public class Engine extends JFrame{
         c.setPreferredSize(new Dimension(WIN_WIDTH, WIN_HEIGHT));
         c.setFocusable(true);
         
-        //listeners de eventos
+        //listeners para la leida de input
         this.in = new Input();
         in.addEngine(this);
         c.addKeyListener(in);
@@ -84,7 +86,7 @@ public class Engine extends JFrame{
         debugScreen.pack();
         debugScreen.setResizable(false);
         
-        //guarda el player y le agrega el input
+        //player
         this.p = player;
         p.addInput(in);
         p.addMap(map);
@@ -93,9 +95,12 @@ public class Engine extends JFrame{
         //mapa
         this.map = map;
         
+        //lista de entidades
+        entities = new ArrayList<>();
+        
         //raycaster
         bg = new Background(Color.black, Color.black);
-        this.raycaster = new RayCaster(p, map, bg);
+        this.raycaster = new RayCaster(p, map, entities,  bg);
         
         //parámetros
         deltaTime = 0;
@@ -107,19 +112,23 @@ public class Engine extends JFrame{
         currentHeight = WIN_HEIGHT;
         fullscreen = false;
         
+        //calculo de los fps
         frameAvg = 30;
         frameCounter = 0;
         dtSum = 0;
         FPS = 0;
         showFPSinGame = false;
         
+        //para ocultar el cursor 
         device = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
-        
         defaultCursor = Cursor.getDefaultCursor();
-        
         BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         hiddenCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0,0), "hidden");
         
+        createFrame();
+    }
+    
+    private void createFrame() {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setFocusable(true);
         this.setResizable(false);
@@ -281,7 +290,7 @@ public class Engine extends JFrame{
             
             //Render
             render(bs);
-            if (debugActive) render2d(bs2d);
+            if (debugActive) render2D(bs2d);
             //in.clearReleased(); //actualiza el input(para los metodos released)
             
             
@@ -335,6 +344,11 @@ public class Engine extends JFrame{
         }
     }
     
+    public void addEntity(Entity en) {
+        en.addRef(this, p, map);
+        entities.add(en);
+    }
+    
     
     
     //UPDATE Y RENDER
@@ -350,9 +364,17 @@ public class Engine extends JFrame{
             togglePause(); //para llamar a togglePause y modificar el mouse
         }
         
-        //metodos update de los componentes
+        //actualizar los componentes
         p.update(dt);
+        updateEntities(dt);
         raycaster.update(dt);
+    }
+    
+    private void updateEntities(double dt) {
+        for (Entity i: entities) {
+            i.update(dt);
+            i.updateDistance();
+        }
     }
     
     
@@ -369,8 +391,7 @@ public class Engine extends JFrame{
         
         //todo lo que se quiere renderizar
             raycaster.renderSimulation3D(g);
-            if (showFPSinGame)
-                drawTextBox(g, String.format("FPS: %.2f", FPS), 0, 0);  
+            if (showFPSinGame) drawTextBox(g, String.format("FPS: %.2f", FPS), 0, 0);  
         
         
         //muestra el frame dibujar
@@ -379,7 +400,7 @@ public class Engine extends JFrame{
     }
     
     //renderiza la vista en 2d
-    private void render2d(BufferStrategy bs) {
+    private void render2D(BufferStrategy bs) {
         Graphics2D g = (Graphics2D) bs.getDrawGraphics();
         g.clearRect(0, 0, view2d.getWidth(), view2d.getHeight());
         
@@ -390,6 +411,7 @@ public class Engine extends JFrame{
             //dibuja las casillas vacias con el color del suelo del fondo
             map.renderMap2(g, bg.floor);
             raycaster.renderView2D(g); //rayos del raycaster
+            renderEntities2D(g);
             p.drawPlayer(g); //jugador
             
             //dibuja el deltatime, fps y si el juego esta pausado
@@ -400,6 +422,15 @@ public class Engine extends JFrame{
 
         g.dispose();
         bs.show();
+    }
+    
+    private void renderEntities2D(Graphics2D g) {
+        for (Entity i: entities) {
+            int w = 10;
+            double x = i.getX(), y = i.getY();
+            g.setColor(Color.blue);
+            g.fillRect((int) (x - w/2), (int) (y - w/2), w, w);
+        }
     }
     
     
@@ -435,6 +466,25 @@ public class Engine extends JFrame{
         a %= 360;
         if (a < 0) a += 360;
         return a;
+    }
+    
+    //aplica la formula de la distancia entre dos puntos
+    public static double distance(DPoint p1, DPoint p2) {
+        double x1 = p1.x;
+        double x2 = p2.x;
+        double y1 = p1.y;
+        double y2 = p2.y;
+        
+        double dx = x2-x1;
+        double dy = y2-y1;
+        
+        return Math.sqrt(dx*dx + dy*dy);
+    }
+    
+    public static double distance(double x1, double y1, double x2, double y2) {
+        double dx = x2-x1;
+        double dy = y2-y1;
+        return Math.sqrt(dx*dx + dy*dy);
     }
  
 }

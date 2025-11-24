@@ -2,12 +2,13 @@ package lib;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
-public class RayCaster {
+public final class RayCaster {
     
     private final Map map;
     private final Player p;
+    private final ArrayList<Entity> entities;
     
     private DPoint playerPos;
     private double angle; //angulo del jugador en radianes
@@ -24,11 +25,12 @@ public class RayCaster {
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
     private Dimension aspectRatio;
     
-    public RayCaster(Player p, Map map, Background bg) {
+    public RayCaster(Player p, Map map, ArrayList<Entity> entities, Background bg) {
         this.p = p;
         this.map = map;
+        this.entities = entities;
         
-        this.FOV = 60; //inicializa en 60 (el fov comun en la mayoria de juegos)
+        this.FOV = 60;
         this.raysToCast = 200;
         
         //establece la relación de aspecto
@@ -69,12 +71,6 @@ public class RayCaster {
         ratio = aspectRatio.width / (1.0 * aspectRatio.height);
     }
     
-    
-    private void updatePlayerInfo() {
-        playerPos = p.getPlayerPos();
-        angle = p.getRadAngle();
-    }
-    
     public void setBackground(Background bg) {
         this.bg = bg;
     }
@@ -83,6 +79,11 @@ public class RayCaster {
     public void update(double dt) {
         updatePlayerInfo();
         castRays();
+    }
+    
+    private void updatePlayerInfo() {
+        playerPos = p.getPlayerPos();
+        angle = p.getRadAngle();
     }
     
     
@@ -98,7 +99,7 @@ public class RayCaster {
     }
 
     
-    //METODOS PARA RENDERIZADO
+    //METODOS PARA EL RENDERIZADO 3D
     
     public void renderSimulation3D(Graphics2D g) {
         /*cada rayo va a dibujar una sola columna de pixeles de la vista en 3D, por lo que el ancho en pixeles será el mismo
@@ -114,10 +115,16 @@ public class RayCaster {
         double heightScale = 1.0 * Engine.WIN_HEIGHT / simHeight;
         AffineTransform old = g.getTransform();
         g.scale(widthScale, heightScale);
+
+        renderWalls(g, simWidth, simHeight);
+        renderEntities(g, simWidth, simHeight);
         
-        //fondo
-        //g.setColor(Color.black);
-        //g.fillRect(0, 0, simWidth, simHeight);
+        g.setTransform(old); //regresa a la escala original
+    }
+    
+    
+    //renderiza las paredes
+    private void renderWalls(Graphics2D g, int simWidth, int simHeight) {
         bg.draw(g, 0, 0, simWidth, simHeight);
         
         for (int i = 0; i < raysToCast; i++) {
@@ -143,18 +150,14 @@ public class RayCaster {
             
             //que columna de pixeles del sprite se va a dibujar
             int column;
-            if (rays[i].isVertical) {
-                column = (int) (rays[i].hit.y % Engine.TILE_SIZE);
-            } else {
-                column = (int) (rays[i].hit.x % Engine.TILE_SIZE);
-            }
+            if (rays[i].isVertical) column = (int) (rays[i].hit.y % Engine.TILE_SIZE);
+            else column = (int) (rays[i].hit.x % Engine.TILE_SIZE);
+            
             
             /*para evitar que las texturas se dibujen invertidas checa si el rayo está mirando a la izquierda en intersecciones
             verticales o hacia abajo en intersecciones horizontales (cosa que indica inverted) y si el rayo si está invertido lo
             corrige tomando las texturas de derecha a izquierda y no de izquierda a derecha como lo haria column normalmente*/
-            if (rays[i].inverted) {
-                column = Engine.TILE_SIZE - column - 1;
-            }
+            if (rays[i].inverted) column = Engine.TILE_SIZE - column - 1;
             
             //obtiene el sprite de la pared que el rayo golpeó para dibujarlo
             Sprite wallSpr = map.getBehaviorSprite(rays[i].tileValue);
@@ -166,8 +169,6 @@ public class RayCaster {
                 wallSpr.drawShadedColumn(g, column, i, offset, 1, rayHeight);
             }
         }
-        
-        g.setTransform(old); //regresa a la escala original
     }
     
     private int getRayHeight(double rayLength, int simHeight) {
@@ -187,6 +188,76 @@ public class RayCaster {
     }
     
     
+    private void renderEntities(Graphics2D g, int simWidth, int simHeight) {
+        double fovRad = Math.toRadians(FOV);
+        double halfFovTan = Math.tan(fovRad / 2.0);
+
+        for (Entity i: entities) {
+            /*dx y dy son las posiciones de la entidad en un plano cartesiano donde el jugador es el origen*/
+            double dx = i.getX() - p.getX();
+            double dy = -(i.getY() - p.getY());
+            double pa = -p.getRadAngle();
+            
+            /*para conocer la posición en pantalla que tendrá la entidad, el eje x se tiene que alinear al
+            angulo del jugador. De esta forma una entidad con x = 0 estará directamente enfrente del jugador,
+            x negativo estará a la izquierda y x positivo a la derecha. Para lograr esto se calcula que angulo
+            sumar a pa para que quede con un angulo de 90, y de esta forma siempre esté alineado como se necesita*/
+            double rotation = (Math.PI / 2) - pa;
+            rotation = Engine.normalizeAngleRad(rotation);
+            DPoint transform = rotateView(dx, dy, rotation);
+            
+            System.out.println("rx: " + transform.x);
+            System.out.println("ry: " + transform.y + "\n");
+            
+            //si está detras del jugador no lo dibuja
+            if (transform.y < 0) continue;
+            
+            
+            //calcula la posicion en x (screenX) en la simulación 3d
+
+            /*t indicará donde deberá estar el personaje en un rango de -1 a 1, siendo -1 el inicio de la pantalla y 1 el final.*/
+            double t = transform.x / transform.y;
+            
+            /*t no es más que la tangente de angulo que hay entre el eje y (que ya está alineado al jugador) y el vector de la
+            entidad. Pero esta tangente puede tomar cualquier valor dependiendo de que tan lejos esté del eje y, entonces se
+            normaliza usando halfOfTan, la tangente del angulo desde el eje y hasta el inicio o final del campo de vista. De
+            esta forma las entidades siempre se mantendrán dentro del rango del fov*/
+            t = t / halfFovTan;
+            
+            /*finalmente se modifica el rango para que vaya de 0 a 1 y se multiplica
+            por el tamaño de la vista 3d para obtener la posición final de x*/
+            int screenX = (int)((t + 1.0) * 0.5 * simWidth);
+            
+            int size = this.getRayHeight(transform.y, simHeight); //ancho y alto de un sprite
+            int offset = (simHeight - size) / 2;
+            
+            int start = screenX - size / 2;
+            for (int j = start; j < start + size; j++) {
+                //no dibuja la columna si está detras de una pared
+                if (j < 0 || j >= rays.length) continue;
+                if (i.getDistance() > rays[j].length) continue;
+                
+                int pos = j - start;
+                int column = pos * Engine.TILE_SIZE / size;
+                i.getSprite().drawColumn(g, column, j, offset, 1, size);
+            }
+            
+        }
+    }
+    
+    /*rota un vector al angulo recibido. Por ejemplo si recibe un vector con un
+    angulo de 60 y recibe a = 30, regresa un vector con un angulo de 90*/
+    private DPoint rotateView(double x, double y, double a) {
+        double cos = Math.cos(a), sin = Math.sin(a);
+        
+        double rx = x * cos - y * sin;
+        double ry = x * sin + y * cos;
+        
+        return new DPoint(rx, ry);
+    }
+    
+    
+    //RENDERIZAR LOS RAYOS EN LA VISTA 2D
     public void renderView2D(Graphics2D g) {
         for (Ray i: rays) {
             i.drawRay(g);
@@ -248,19 +319,6 @@ final class Ray {
         tileValue = hit != null ? map.getWallValue(hit.x, hit.y) : 0;
     }
     
-    //aplica la formula de la distancia entre dos puntos (que también podria considerarse la de la magnitud de un vector, pues un rayo es un vector)
-    private double distance(DPoint p1, DPoint p2) {
-        double x1 = p1.x;
-        double x2 = p2.x;
-        double y1 = p1.y;
-        double y2 = p2.y;
-        
-        double dx = x2-x1;
-        double dy = y2-y1;
-        
-        return Math.sqrt(dx*dx + dy*dy);
-    }
-    
     private double cast(Map map) {
         DPoint pos = new DPoint(px, py);
         
@@ -272,10 +330,10 @@ final class Ray {
         double vLength;
         
         //si se dio una interseccion horizontal calcula el valor del rayo horizontal, si no le da un valor muy alto
-        hLength = foundHorizontalIntersection && horizontalHit != null ? distance(pos, horizontalHit) : Double.POSITIVE_INFINITY;
+        hLength = foundHorizontalIntersection && horizontalHit != null ? Engine.distance(pos, horizontalHit) : Double.POSITIVE_INFINITY;
         
         //igual con la intersección vertical
-        vLength = foundVerticalIntersection && verticalHit != null ? distance(pos, verticalHit) : Double.POSITIVE_INFINITY;
+        vLength = foundVerticalIntersection && verticalHit != null ? Engine.distance(pos, verticalHit) : Double.POSITIVE_INFINITY;
         
         //primero verifica si si encontró el punto, si no regresa el valor más alto posible
         /*ya que está regresando infinito, al hacer el calculo de la longitud de la columna de ese rayo siempre dará 0,
@@ -342,7 +400,8 @@ final class Ray {
         incrementX = incrementY / Math.tan(angle);
         
         //empieza el loop de revisión, solo para de revisar cuando sale del mapa
-        while(nextX >= 0 && nextX <= n * Engine.TILE_SIZE && nextY >= 0 && nextY <= m * Engine.TILE_SIZE ) {
+        while(nextX >= 0 && nextX <= n * Engine.TILE_SIZE
+                && nextY >= 0 && nextY <= m * Engine.TILE_SIZE ) {
             
             //si encuentra una pared en un incremento lo marca y deja de buscar
             if (map.insideOfWall(nextX, nextY)) {

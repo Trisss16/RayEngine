@@ -9,6 +9,16 @@ public class Entity {
     protected double x;
     protected double y;
     
+    private double distance; //distancia hacia el jugador
+    
+    //referencias
+    protected Player p;
+    protected Map map;
+    protected Engine e;
+    
+
+    //constructores
+    
     public Entity(Sprite s, double x, double y) {
         this.s = s;
         this.x = x;
@@ -21,9 +31,40 @@ public class Entity {
         this.y = y;
     }
     
+    public void addRef(Engine e, Player p, Map map) {
+        this.e = e;
+        this.p = p;
+        this.map = map;
+    }
+    
+    public double getX() {
+        return x;
+    }
+    
+    public double getY() {
+        return y;
+    }
+    
+    public Sprite getSprite() {
+        return s;
+    }
+    
+    //update y render
+    
     public void update(double dt)  {
     }
     
     public void render(Graphics2D g) {
+    }
+    
+    
+    //metodos para el renderizado dentro del raycaster
+    
+    public final void updateDistance() {
+        distance = Engine.distance(x, y, p.getX(), p.getY());
+    }
+    
+    public final double getDistance() {
+        return distance;
     }
 }

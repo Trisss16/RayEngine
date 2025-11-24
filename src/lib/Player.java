@@ -50,6 +50,14 @@ public final class Player {
         return new DPoint(x, y);
     }
     
+    public double getX() {
+        return x;
+    }
+    
+    public double getY() {
+        return y;
+    }
+    
     
     //para guardar una referencia de la clase Input de engine y acceder a los eventos de mouse y teclado del frame de engine
     public void addInput(Input i) {
@@ -107,7 +115,7 @@ public final class Player {
         
         updateAngle();
         updateMovement(dt); //actualiza el movimiento del personaje
-        //System.out.println(angle);
+        System.out.println(Math.toDegrees(angle));
     }
     
     
@@ -195,6 +203,7 @@ public final class Player {
         offset *= sensitivity;
         addAngle(offset);
         
+        //System.out.println(Math.toDegrees(angle));
         //regresa el mouse al centro
         mouseController.mouseMove(centerX, centerY);
     }
