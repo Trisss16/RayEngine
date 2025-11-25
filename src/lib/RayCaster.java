@@ -10,6 +10,7 @@ public final class RayCaster {
     private final Map map;
     private final Player p;
     private final ArrayList<Entity> entities;
+    private final ArrayList <Banner> banners;
     
     private BufferedImage sim3D;
     private Graphics2D gSim;
@@ -31,10 +32,11 @@ public final class RayCaster {
     //aspect ratio o relacion de aspecto, que indica la proporción que el renderizado mantendrá
     private Dimension aspectRatio;
     
-    public RayCaster(Player p, Map map, ArrayList<Entity> entities, Background bg) {
+    public RayCaster(Player p, Map map, ArrayList<Entity> entities, ArrayList<Banner> banners, Background bg) {
         this.p = p;
         this.map = map;
         this.entities = entities;
+        this.banners = banners;
         this.bg = bg;
         this.FOV = 60;
         
@@ -306,6 +308,11 @@ public final class RayCaster {
         double ry = x * sin + y * cos;
         
         return new DPoint(rx, ry);
+    }
+    
+    /**/
+    private void renderBanners(Graphics2D g, int simWidth, int simHeight) {
+        
     }
     
     

@@ -2,7 +2,6 @@ package rayengine;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.util.Random;
 import lib.*;
 
 public class RayEngine {
@@ -61,7 +60,7 @@ public class RayEngine {
         //iniciar el motor
         Engine e = new Engine(p, map);
         e.setWindowSize(new Dimension(800, 600));
-        e.setAspectRatio(new Dimension(16, 9));
+        e.setAspectRatio(new Dimension(4, 3));
         e.setRaysToCast(1200); //indica cuantos rayos se lanzan
         e.setFOV(60); //indica el angulo de vision
         //e.setWindowSize(new Dimension(1280, 720));

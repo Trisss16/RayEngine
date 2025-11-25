@@ -17,7 +17,10 @@ public final class Engine extends JFrame{
     private final Player p;
     private final Map map;
     private final Canvas c;
+    
+    //raycaster
     private final ArrayList<Entity> entities;
+    private final ArrayList<Banner> banners;
     private final RayCaster raycaster;
     
     //elminiar entidades
@@ -112,9 +115,12 @@ public final class Engine extends JFrame{
         entities = new ArrayList<>();
         nextToBeRemoved = new ArrayList<>();
         
+        //lista de banners
+        banners = new ArrayList<>();
+        
         //raycaster
         bg = new Background(Color.black, Color.black);
-        this.raycaster = new RayCaster(p, map, entities,  bg);
+        this.raycaster = new RayCaster(p, map, entities, banners, bg);
         
         //parámetros
         deltaTime = 0;

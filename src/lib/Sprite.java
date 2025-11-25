@@ -13,8 +13,8 @@ public class Sprite {
     private final Color shadow;
     
     public Sprite(String path) {
-        //crea el sprite con la textura que recibe
-        sprite = getImage(path);
+        //crea el sprite con getImage, luego lo reescala al tamaño de las casillas
+        sprite = Sprite.reescale(getImage(path), Engine.TILE_SIZE, Engine.TILE_SIZE);
         
         //crea el sprite sombreado
         shadow = new Color(0, 0, 0, 128); //negro a 50% de opacidad
@@ -31,12 +31,12 @@ public class Sprite {
         shadedSprite = getShadedImg(sprite);
     }
     
-    private BufferedImage getImage(String path) {
+    public static final BufferedImage getImage(String path) {
         BufferedImage im;
         
         try {
             
-            InputStream is = getClass().getResourceAsStream(path);
+            InputStream is = Sprite.class.getResourceAsStream(path);
             
             if (is == null) {
                 //cuando no se procesa correctamente una textura crea un cuadrado magenta
@@ -44,7 +44,6 @@ public class Sprite {
             }
             
             im = ImageIO.read(is);
-            im = Sprite.reescale(im, Engine.TILE_SIZE, Engine.TILE_SIZE);
             //System.out.println("Imagen extraida.");
             
         } catch (IOException e) {
