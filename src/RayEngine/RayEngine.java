@@ -2,6 +2,7 @@ package rayengine;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import lib.*;
 
 public class RayEngine {
@@ -86,11 +87,12 @@ public class RayEngine {
                 y = (int) (Math.random() * (map.m * Engine.TILE_SIZE));
             } while(map.insideOfWall(x, y));
             
-            e.addEntity(new Entity(entitySprite, x, y));
+            //e.addEntity(new Entity(entitySprite, x, y));
         }
         
         e.addEntity(new DemoEntity(entitySprite, 320, 192));
         
+        e.addBanner(new Banner("/res/background.png", 0.5, 0.5, 0.4, 0.4));
         e.start();
     }
     
@@ -108,11 +110,13 @@ class DemoEntity extends Entity {
     
     @Override
     public void update(double dt) {
-        if (timer > 3) {
+        if (timer > 5) {
             timer = 0;
             //e.removeEntity(this);
         } else {
             timer += dt;
         }
+        
+        y += 10 * dt;
     }
 }

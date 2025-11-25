@@ -182,6 +182,55 @@ public final class Engine extends JFrame{
     }
     
     
+    //BANNERS
+    
+    public void addBanner(Banner b) {
+        //no agrega el banner si ya tenia otra instancia
+        if (banners.contains(b)) return;
+        
+        banners.add(b);
+        updateBanners(); //actualiza los zBuffer
+    }
+    
+    public void addBanner(Banner b, int zBuffer) {
+        //no agrega el banner si ya tenia otra instancia
+        if (banners.contains(b)) return;
+        
+        //si sale de lo permitido por el arraylist lo agrega al final
+        if (zBuffer > banners.size() || zBuffer < 0) {
+            banners.add(b);
+        } else { //si no lo agrega en la posición que especifica
+            banners.add(zBuffer, b);
+        }
+        
+        updateBanners(); //actualiza los zBuffers
+    }
+    
+    //mueve el elemento en el zBuffer recibido al zBuffer especificado
+    public void moveBanner(int zBuffer, int targetZBuffer) {
+        //sale si tiene un zBuffer invalido
+        if (zBuffer >= banners.size() || zBuffer < 0 ||
+                targetZBuffer >= banners.size() || targetZBuffer < 0) {
+            return;
+        }
+        
+        Banner aux = banners.remove(zBuffer);
+        banners.add(targetZBuffer, aux); //vuelve a añadirlo en el zBuffer esperado
+        updateBanners(); //actualiza los zBuffers
+    }
+    
+    //actualiza el zBuffer de cada banner
+    public void updateBanners() {
+        for (int i = 0; i < banners.size(); i++) {
+            banners.get(i).setZBuffer(i);
+        }
+    }
+    
+    public int bannersSize() {
+        return banners.size();
+    }
+    
+    
     //CANVAS
     
     public Point getCanvasPos() {

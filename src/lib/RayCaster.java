@@ -12,8 +12,6 @@ public final class RayCaster {
     private final ArrayList<Entity> entities;
     private final ArrayList <Banner> banners;
     
-    private BufferedImage sim3D;
-    private Graphics2D gSim;
     private int simWidth;
     private int simHeight;
     
@@ -78,15 +76,6 @@ public final class RayCaster {
         que el número de rayos trazados. se calcula el alto de la simulación con una regla de 3, considerando el aspect ratio*/
         simWidth = raysToCast;
         simHeight = (simWidth * aspectRatio.height) / aspectRatio.width;
-        
-        //vuelve a crear la imagen con el ancho y alto modificado
-        setSim3D();
-    }
-    
-    private void setSim3D() {
-        //ignora transparencia para mejorar el rendimiento
-        sim3D = new BufferedImage(simWidth, simHeight, Transparency.OPAQUE);
-        gSim = sim3D.createGraphics();
     }
     
     public final void setAspectRatio(int w, int h) {
@@ -158,9 +147,10 @@ public final class RayCaster {
         g.translate(xOffset, yOffset);
         g.scale(scale, scale);
         
-        //dibujar paredes y sprites
+        //dibujar paredes, sprites y banners
         renderWalls(g, simWidth, simHeight);
         renderEntities(g, simWidth, simHeight);
+        renderBanners(g, simWidth, simHeight);
         
         g.setTransform(old); //regresa a la escala original
         
@@ -310,9 +300,11 @@ public final class RayCaster {
         return new DPoint(rx, ry);
     }
     
-    /**/
+    ///BANNERS
     private void renderBanners(Graphics2D g, int simWidth, int simHeight) {
-        
+        for (Banner i: banners) {
+            i.draw(g, simWidth, simHeight);
+        }
     }
     
     

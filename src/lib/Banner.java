@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 public final class Banner {
     
     private BufferedImage banner;
+    private int zBuffer;
     
     /*maneja las coordenadas y dimensiones no con pixeles, si no con proporciones de la
     pantalla. Por ejemplo un banner dibujado en (0.5, 0.5) siempre se dibujará en la
@@ -23,6 +24,13 @@ public final class Banner {
         this.h = h;
     }
     
+    public void setZBuffer(int zBuffer) {
+        this.zBuffer = zBuffer;
+    }
+    
+    public int getZBuffer() {
+        return zBuffer;
+    }
     
     //COORDENADAS
     
@@ -65,7 +73,7 @@ public final class Banner {
     }
     
     
-    public void draw(Graphics2D g, double winW, double winH) {
+    public void draw(Graphics2D g, int winW, int winH) {
         //coordenadas reales en la simulación
         int sx = (int) (x * winW);
         int sy = (int) (y * winH);
